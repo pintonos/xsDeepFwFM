@@ -17,8 +17,8 @@ This repository is part of my master thesis.
 
 
 ## References
-https://github.com/rixwew/pytorch-fm
-https://github.com/WayneDW/DeepLight_Deep-Lightweight-Feature-Interactions
-https://github.com/peterliht/knowledge-distillation-pytorch
-https://github.com/rapidsai/deeplearning
-https://github.com/facebookresearch/dlrm
+- https://github.com/rixwew/pytorch-fm
+- https://github.com/WayneDW/DeepLight_Deep-Lightweight-Feature-Interactions
+- https://github.com/peterliht/knowledge-distillation-pytorch
+- https://github.com/rapidsai/deeplearning
+- https://github.com/facebookresearch/dlrm
