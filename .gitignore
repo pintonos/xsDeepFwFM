@@ -1,3 +1,8 @@
+/saved_models/
+.criteo
+.twitter
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
