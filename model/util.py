@@ -2,12 +2,12 @@ import torch
 from sklearn import metrics
 import tqdm
 import numpy as np
+from time import time, time_ns
 
 from dataset.criteo import CriteoDataset
 from dataset.twitter import TwitterDataset
 from model.models import FactorizationMachineModel, DeepFactorizationMachineModel, \
     FieldWeightedFactorizationMachineModel, DeepFieldWeightedFactorizationMachineModel
-
 
 
 def compute_prauc(gt, pred):
@@ -131,10 +131,7 @@ def test(model, data_loader, criterion, device):
 
     return total_loss / len(data_loader), metrics.roc_auc_score(targets, predicts), compute_prauc(targets, predicts), compute_rce(targets, predicts)
 
-
-def inference_time(model, data_loader, device):
-    model.to(device)
-    torch.set_num_threads(1)
+def profile_inference(model, data_loader, device):
     model.eval()
     with torch.no_grad():
         for i, (fields, target) in enumerate(tqdm.tqdm(data_loader, smoothing=0, mininterval=1.0)):
@@ -145,5 +142,55 @@ def inference_time(model, data_loader, device):
                 with torch.autograd.profiler.profile(with_stack=True, use_cuda=False) as prof:
                     y = model(fields)
 
-        print(prof.key_averages().table(sort_by='self_cpu_time_total', row_limit=5))
-        #print(prof.key_averages(group_by_stack_n=5).table(sort_by='self_cpu_time_total', row_limit=20))
+    print(prof.key_averages().table(sort_by='self_cpu_time_total', row_limit=5))
+    #print(prof.key_averages(group_by_stack_n=5).table(sort_by='self_cpu_time_total', row_limit=20))
+
+
+def inference_time_cpu(model, data_loader, num_threads=1):
+    device = 'cpu'
+    model.to(device)
+    torch.set_num_threads(num_threads)
+    model.eval()
+
+    profile_inference(model, data_loader, device)
+    
+    time_spent = []
+    with torch.no_grad():
+        for i, (fields, target) in enumerate(tqdm.tqdm(data_loader, smoothing=0, mininterval=1.0)):
+            fields, target = fields.to(device), target.to(device)
+            if len(data_loader) < i < 100:  # warmup
+                _ = model(fields)
+            else:
+                start_time = time_ns()
+                _ = model(fields)
+                time_on_batch_ms = (time_ns() - start_time) // 1_000_000
+                time_spent.append(time_on_batch_ms)
+
+    print('\tAvg forward pass time per batch ({}-Threads)(ms):\t{:.3f}'.format(num_threads, np.mean(time_spent)))
+    print('\tAvg forward pass time (batch) ({}-Threads)(ms):\t{:.5f}'.format(num_threads, np.sum(time_spent) / len(data_loader) / data_loader.batch_size))
+
+def inference_time_gpu(model, data_loader):
+    device = 'cuda:0'
+    model.to(device)
+    model.eval()
+
+    profile_inference(model, data_loader, device)
+
+    time_spent = []
+    with torch.no_grad():
+        for i, (fields, target) in enumerate(tqdm.tqdm(data_loader, smoothing=0, mininterval=1.0)):
+            fields, target = fields.to(device), target.to(device)
+            if len(data_loader) < i < 100:  # warmup
+                y = model(fields)
+            else:
+                start = torch.cuda.Event(enable_timing=True)
+                end = torch.cuda.Event(enable_timing=True)
+                start.record()
+                _ = model(fields)
+                end.record()
+                torch.cuda.synchronize()
+                time_on_batch_ms = start.elapsed_time(end)
+                time_spent.append(time_on_batch_ms)
+
+    print('\tAvg forward pass time per batch (GPU)(ms):\t{:.3f}'.format(np.mean(time_spent)))
+    print('\tAvg forward pass time (batch) (GPU)(ms):\t{:.5f}'.format(np.sum(time_spent) / len(data_loader) / data_loader.batch_size))

@@ -5,12 +5,13 @@ from torch.utils.data import DataLoader
 import numpy as np
 
 from model.models import EarlyStopper
-from model.util import get_dataset, get_model, train, test
+from model.util import get_dataset, get_model, train, test, inference_time_cpu, inference_time_gpu
 
 
 def main(dataset_name,
          dataset_path,
          model_name,
+         model_path,
          epochs,
          learning_rate,
          batch_size,
@@ -26,9 +27,14 @@ def main(dataset_name,
         dataset, (train_length, valid_length, test_length))
     train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=0)
     valid_data_loader = DataLoader(valid_dataset, batch_size=batch_size, num_workers=0)
-    test_data_loader = DataLoader(test_dataset, batch_size=8192, num_workers=0)
+    test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0)
 
-    model = get_model(model_name, dataset).to(device)
+    if model_path:
+        model = get_model(model_name, dataset).to(device)
+        checkpoint = torch.load(model_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+    else:
+        model = get_model(model_name, dataset).to(device)
 
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -49,9 +55,10 @@ def main(dataset_name,
 
     '''mini_dataset, _ = torch.utils.data.random_split(dataset, (300, len(dataset) - 300))
     mini_data_loader = DataLoader(mini_dataset, batch_size=1, num_workers=0)
-    inference_time(model, mini_data_loader, torch.device('cpu'))
+    inference_time(model, mini_data_loader, torch.device('cpu'))'''
 
-    inference_time(model, test_data_loader, torch.device('cpu'))'''
+    inference_time_cpu(model, test_data_loader)
+    #inference_time_gpu(model, test_data_loader)
 
 
 if __name__ == '__main__':
@@ -61,6 +68,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset_name', default='criteo')
     parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train_sss.txt')
     parser.add_argument('--model_name', help='fm or dfm or fwfm or dfwfm', default='fm')
+    parser.add_argument('--model_path', help='path to checkpoint of model')
     parser.add_argument('--epochs', type=int, default=1)
     parser.add_argument('--learning_rate', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=2048)
@@ -71,6 +79,7 @@ if __name__ == '__main__':
     main(args.dataset_name,
          args.dataset_path,
          args.model_name,
+         args.model_path,
          args.epochs,
          args.learning_rate,
          args.batch_size,

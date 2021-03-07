@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 
-from model.util import train_kd, test, get_dataset, get_model, inference_time
+from model.util import train_kd, test, get_dataset, get_model, inference_time_cpu, inference_time_gpu
 from model.models import EarlyStopper
 
 
@@ -25,11 +25,9 @@ def main(dataset_name,
     test_length = len(dataset) - train_length - valid_length
     train_dataset, valid_dataset, test_dataset = torch.utils.data.random_split(
         dataset, (train_length, valid_length, test_length))
-    mini_dataset, _ = torch.utils.data.random_split(dataset, (300, len(dataset) - 300))
     train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=0)
     valid_data_loader = DataLoader(valid_dataset, batch_size=batch_size, num_workers=0)
-    test_data_loader = DataLoader(test_dataset, batch_size=8192, num_workers=0)
-    mini_data_loader = DataLoader(mini_dataset, batch_size=1, num_workers=0)
+    test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0)
 
     teacher_model = get_model(model_name, dataset).to(device)
     checkpoint = torch.load(model_path)
@@ -54,11 +52,11 @@ def main(dataset_name,
             print(f'validation: best auc: {early_stopper.best_accuracy}')
             break
 
-    inference_time(teacher_model, mini_data_loader, torch.device('cpu'))
-    inference_time(student_model, mini_data_loader, torch.device('cpu'))
+    inference_time_cpu(teacher_model, test_data_loader)
+    inference_time_cpu(student_model, test_data_loader)
 
-    inference_time(teacher_model, test_data_loader, torch.device('cpu'))
-    inference_time(student_model, test_data_loader, torch.device('cpu'))
+    inference_time_gpu(teacher_model, test_data_loader)
+    inference_time_gpu(student_model, test_data_loader)
 
 
 if __name__ == '__main__':

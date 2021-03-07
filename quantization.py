@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 
-from model.util import test, get_dataset, get_model, inference_time
+from model.util import test, get_dataset, get_model, inference_time_cpu
 from model.models import EarlyStopper
 
 
@@ -24,7 +24,7 @@ def main(dataset_name,
         dataset, (train_length, valid_length, test_length))
     train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=0)
     valid_data_loader = DataLoader(valid_dataset, batch_size=batch_size, num_workers=0)
-    test_data_loader = DataLoader(test_dataset, batch_size=8192, num_workers=0)
+    test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0)
 
     model = get_model(model_name, dataset).to(device)
     criterion = torch.nn.BCELoss()
@@ -67,9 +67,7 @@ def main(dataset_name,
     loss, auc, prauc, rce = test(quantized_model, test_data_loader, criterion, device)
     print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
 
-    mini_dataset, _ = torch.utils.data.random_split(dataset, (300, len(dataset) - 300))
-    mini_data_loader = DataLoader(mini_dataset, batch_size=1, num_workers=0)
-    inference_time(model, mini_data_loader, torch.device('cpu'))
+    inference_time_cpu(model, test_data_loader)
 
 
 if __name__ == '__main__':

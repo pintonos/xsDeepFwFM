@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+import os
 
 from model.layers import FeaturesLinear, FactorizationMachine, FeaturesEmbedding, MultiLayerPerceptron, FieldWeightedFactorizationMachine
 
@@ -145,6 +146,8 @@ class EarlyStopper(object):
         if accuracy > self.best_accuracy:
             self.best_accuracy = accuracy
             self.trial_counter = 0
+            if not os.path.exists(os.path.dirname(self.save_path)):
+                os.makedirs(os.path.dirname(self.save_path))
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
