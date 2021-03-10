@@ -36,7 +36,7 @@ class DeepFactorizationMachineModel(torch.nn.Module):
 
 
 class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
-    def __init__(self, field_dims, embed_dim, mlp_dims, dropout, use_lw=False, use_fwlw=False, use_emb_bag=False, use_qr_emb=False, quantize_dnn=False, batch_norm=False):
+    def __init__(self, field_dims, embed_dim, mlp_dims, dropout, use_lw=False, use_fwlw=False, use_emb_bag=False, use_qr_emb=False, quantize_dnn=False):
         super().__init__()
         self.num_fields = len(field_dims)
         self.use_lw = use_lw
@@ -47,16 +47,16 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         self.fwfm_linear = torch.nn.Linear(embed_dim, self.num_fields, bias=False)
         self.fwfm = FieldWeightedFactorizationMachine(field_dims, embed_dim, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
         self.embed_output_dim = len(field_dims) * embed_dim
-        self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout, quantize=quantize_dnn, batch_norm=batch_norm)
+        self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout, quantize=quantize_dnn)
 
     def forward(self, x):
         """
         :param x: Long tensor of size ``(batch_size, num_fields)``
         """
         if self.use_emb_bag or self.use_qr_emb:
-            embed_x = [self.fwfm.embeddings[i](torch.unsqueeze(x[:, i], 1)) for i in range(self.num_fields)]
+            embed_x = [self.fwfm.embeddings[i](torch.unsqueeze(x[:, i], 1).contiguous()) for i in range(self.num_fields)]
         else:
-            embed_x = [self.fwfm.embeddings[i](x[:, i]) for i in range(self.num_fields)]
+            embed_x = [self.fwfm.embeddings[i](x[:, i].contiguous()) for i in range(self.num_fields)]
 
         fwfm_second_order = torch.sum(self.fwfm(torch.stack(embed_x)), dim=1, keepdim=True)
 

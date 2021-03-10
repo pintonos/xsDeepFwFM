@@ -40,33 +40,42 @@ def main(dataset_name,
     device = torch.device('cpu')
     quantized_model.to(device)
 
-    quantized_model.qconfig = torch.quantization.default_qconfig#torch.quantization.get_default_qconfig('fbgemm')
-    quantized_model.fwfm.embeddings.qconfig = None #torch.quantization.float_qparams_weight_only_qconfig
-    quantized_model.linear.qconfig = None
-    quantized_model.fwfm.field_cov.qconfig = None
-    quantized_model.fwfm_linear.qconfig = None
+    # dynamic quantization
+    model_dynamic_quantized  = torch.quantization.quantize_dynamic(model=quantized_model, qconfig_spec={'mlp'}, dtype=torch.qint8)
 
-    # TODO cannot fuse linear and relu because batch norm in between
-    # https: // github.com / PyTorchLightning / pytorch - lightning / issues / 2544
-    # https://discuss.pytorch.org/t/batch-normalization-of-linear-layers/20989/9 where to put batchnorm
-    #quantized_model = torch.quantization.fuse_modules(quantized_model,
-                                                      #[['mlp.mlp.0', 'mlp.mlp.1', 'mlp.mlp.2'],
-                                                      # ['mlp.mlp.4', 'mlp.mlp.5', 'mlp.mlp.6'],
-                                                      # ['mlp.mlp.8', 'mlp.mlp.9', 'mlp.mlp.10']])
+    loss, auc, prauc, rce = test(model_dynamic_quantized , test_data_loader, criterion, device)
+    print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+    inference_time_cpu(model_dynamic_quantized , test_data_loader)
+
+    # static quantization
+    quantized_model.mlp.qconfig = torch.quantization.get_default_qconfig('fbgemm')
+    quantized_model.fwfm.embeddings.qconfig = torch.quantization.float_qparams_weight_only_qconfig
+
+    #  fuse linear and batchnorm1d
     quantized_model = torch.quantization.fuse_modules(quantized_model,
                                                           [['mlp.mlp.0', 'mlp.mlp.1'],
-                                                           ['mlp.mlp.3', 'mlp.mlp.4'],
-                                                           ['mlp.mlp.6', 'mlp.mlp.7']])
+                                                           ['mlp.mlp.4', 'mlp.mlp.5'],
+                                                           ['mlp.mlp.8', 'mlp.mlp.9']])
+    #  fuse linear and relu
+    quantized_model = torch.quantization.fuse_modules(quantized_model,
+                                                          [['mlp.mlp.0', 'mlp.mlp.2'],
+                                                           ['mlp.mlp.4', 'mlp.mlp.6'],
+                                                           ['mlp.mlp.8', 'mlp.mlp.10']])
 
     torch.quantization.prepare(quantized_model, inplace=True)
+    print(quantized_model)
     _, _, _, _ = test(quantized_model, valid_data_loader, criterion, device)  # calibrate
 
-    torch.quantization.convert(quantized_model, inplace=True)
+    model_static_quantized = torch.quantization.convert(quantized_model)
 
-    quantized_model.mlp.quantize = True
-    loss, auc, prauc, rce = test(quantized_model, test_data_loader, criterion, device)
+    model_static_quantized.mlp.quantize = True
+    loss, auc, prauc, rce = test(model_static_quantized, test_data_loader, criterion, device)
     print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+    inference_time_cpu(model_static_quantized, test_data_loader)
 
+    # original model
+    loss, auc, prauc, rce = test(model, test_data_loader, criterion, device)
+    print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     inference_time_cpu(model, test_data_loader)
 
 
@@ -75,9 +84,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', default='criteo')
-    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train_ssss.txt')
-    parser.add_argument('--model_name', help='dfm or dfwfm', default='dwfwfm')
-    parser.add_argument('--model_path', help='path to checkpoint of model', default='./saved_models/dwfwfm.pt')
+    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train_sss.txt')
+    parser.add_argument('--model_name', help='dfm or dfwfm', default='dfwfm')
+    parser.add_argument('--model_path', help='path to checkpoint of model', default='./saved_models/dfwfm.pt')
     parser.add_argument('--learning_rate', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=2048)
     parser.add_argument('--weight_decay', type=float, default=1e-6)

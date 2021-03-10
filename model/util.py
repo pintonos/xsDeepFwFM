@@ -53,7 +53,7 @@ def get_model(name, dataset, mlp_dims=(400, 400, 400)):
     elif name == 'fwfm':
         return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=False, use_lw=False, use_emb_bag=False, use_qr_emb=False)
     elif name == 'dfwfm':
-        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=False, use_lw=False, use_emb_bag=False, use_qr_emb=False, mlp_dims=mlp_dims, dropout=0.2, batch_norm=False)
+        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=False, use_qr_emb=False, mlp_dims=mlp_dims, dropout=0.2)
     else:
         raise ValueError('unknown model name: ' + name)
 
@@ -73,6 +73,7 @@ def train(model, optimizer, data_loader, criterion, device, log_interval=100):
         if (i + 1) % log_interval == 0:
             tk0.set_postfix(loss=total_loss / log_interval)
             total_loss = 0
+
 
 def train_kd(student_model, teacher_model, optimizer, data_loader, device, alpha=0.9, temperature=3, log_interval=100):
     criterion = torch.nn.BCELoss()
@@ -131,6 +132,7 @@ def test(model, data_loader, criterion, device):
 
     return total_loss / len(data_loader), metrics.roc_auc_score(targets, predicts), compute_prauc(targets, predicts), compute_rce(targets, predicts)
 
+
 def profile_inference(model, data_loader, device):
     model.eval()
     with torch.no_grad():
@@ -168,6 +170,7 @@ def inference_time_cpu(model, data_loader, num_threads=1):
 
     print('\tAvg forward pass time per batch ({}-Threads)(ms):\t{:.3f}'.format(num_threads, np.mean(time_spent)))
     print('\tAvg forward pass time (batch) ({}-Threads)(ms):\t{:.5f}'.format(num_threads, np.sum(time_spent) / len(data_loader) / data_loader.batch_size))
+
 
 def inference_time_gpu(model, data_loader):
     device = 'cuda:0'
