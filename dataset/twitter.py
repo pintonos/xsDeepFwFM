@@ -35,7 +35,7 @@ class TwitterDataset(torch.utils.data.Dataset):
         self.NUM_LABELS = 4
         self.NUM_FEATS = 47
         self.NUM_INT_FEATS = 11
-        self.min_threshold = min_threshold
+        self.min_threshold = min_threshold # TODO wanted?
         self.LABEL_IDX = ['reply', 'retweet', 'retweet_comment', 'like'].index(twitter_label)
         df = pd.read_parquet(dataset_path)
         df.fillna(0, inplace=True)
@@ -47,6 +47,7 @@ class TwitterDataset(torch.utils.data.Dataset):
             if dataset_path is None:
                 raise ValueError('create cache: failed: dataset_path is None')
             self.__build_cache(dataset_path, cache_path)
+        os.remove('./tmp.txt')
         self.env = lmdb.open(cache_path, create=False, lock=False, readonly=True)
         with self.env.begin(write=False) as txn:
             self.length = txn.stat()['entries'] - 1
@@ -63,7 +64,7 @@ class TwitterDataset(torch.utils.data.Dataset):
 
     def __build_cache(self, path, cache_path):
         feat_mapper, defaults = self.__get_feat_mapper(path)
-        with lmdb.open(cache_path, map_size=int(1e10)) as env:
+        with lmdb.open(cache_path, map_size=int(1e11)) as env:
             field_dims = np.zeros(self.NUM_LABELS + self.NUM_FEATS, dtype=np.uint32)
             for i, fm in feat_mapper.items():
                 field_dims[i] = len(fm) + 1

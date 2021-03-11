@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 import numpy as np
 
 from model.models import EarlyStopper
-from model.util import get_dataset, get_model, train, test, inference_time_cpu, inference_time_gpu
+from model.util import get_dataset, get_model, train, test, inference_time_cpu, inference_time_gpu, print_size_of_model
 
 
 def main(dataset_name,
@@ -23,8 +23,18 @@ def main(dataset_name,
     train_length = int(len(dataset) * 0.8)
     valid_length = int(len(dataset) * 0.1)
     test_length = len(dataset) - train_length - valid_length
-    train_dataset, valid_dataset, test_dataset = torch.utils.data.random_split(
-        dataset, (train_length, valid_length, test_length))
+
+    # twitter dataset is already ordered according to train, valid, test sets
+    if dataset_name == 'twitter':
+        train_indices = np.arange(train_length)
+        valid_indices = np.arange(train_length, train_length+valid_length)
+        test_indices = np.arange(train_length + valid_length, len(dataset))
+
+        train_dataset, valid_dataset, test_dataset = torch.utils.data.Subset(dataset, train_indices), torch.utils.data.Subset(dataset, valid_indices), torch.utils.data.Subset(dataset, test_indices)
+    else:
+        train_dataset, valid_dataset, test_dataset = torch.utils.data.random_split(
+            dataset, (train_length, valid_length, test_length))
+
     train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=0)
     valid_data_loader = DataLoader(valid_dataset, batch_size=batch_size, num_workers=0)
     test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0)
@@ -53,12 +63,9 @@ def main(dataset_name,
     loss, auc, prauc, rce = test(model, test_data_loader, criterion, device)
     print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
 
-    '''mini_dataset, _ = torch.utils.data.random_split(dataset, (300, len(dataset) - 300))
-    mini_data_loader = DataLoader(mini_dataset, batch_size=1, num_workers=0)
-    inference_time(model, mini_data_loader, torch.device('cpu'))'''
-
     inference_time_cpu(model, test_data_loader)
-    #inference_time_gpu(model, test_data_loader)
+    inference_time_gpu(model, test_data_loader)
+    print_size_of_model(model)
 
 
 if __name__ == '__main__':
@@ -66,8 +73,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', default='criteo')
-    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train_sss.txt')
-    parser.add_argument('--model_name', help='fm or dfm or fwfm or dfwfm', default='fm')
+    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train_ssss.txt')
+    parser.add_argument('--model_name', help='fm or dfm or fwfm or dfwfm', default='dfwfm')
     parser.add_argument('--model_path', help='path to checkpoint of model')
     parser.add_argument('--epochs', type=int, default=1)
     parser.add_argument('--learning_rate', type=float, default=0.001)

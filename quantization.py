@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 
-from model.util import test, get_dataset, get_model, inference_time_cpu
+from model.util import test, get_dataset, get_model, inference_time_cpu, static_quantization, quantization_aware_training, print_size_of_model
 from model.models import EarlyStopper
 
 
@@ -36,47 +36,37 @@ def main(dataset_name,
     epoch = checkpoint['epoch']
     loss = checkpoint['loss']
 
-    quantized_model = model.eval()
-    device = torch.device('cpu')
-    quantized_model.to(device)
+    model.eval()
+    model.to(torch.device('cpu'))
 
     # dynamic quantization
-    model_dynamic_quantized  = torch.quantization.quantize_dynamic(model=quantized_model, qconfig_spec={'mlp'}, dtype=torch.qint8)
-
-    loss, auc, prauc, rce = test(model_dynamic_quantized , test_data_loader, criterion, device)
-    print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+    model_dynamic_quantized  = torch.quantization.quantize_dynamic(model=model, qconfig_spec={'mlp'}, dtype=torch.qint8)
+    loss, auc, prauc, rce = test(model_dynamic_quantized , test_data_loader, criterion, torch.device('cpu'))
+    print(f'dynamic quantization test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     inference_time_cpu(model_dynamic_quantized , test_data_loader)
+    print_size_of_model(model_dynamic_quantized)
 
     # static quantization
-    quantized_model.mlp.qconfig = torch.quantization.get_default_qconfig('fbgemm')
-    quantized_model.fwfm.embeddings.qconfig = torch.quantization.float_qparams_weight_only_qconfig
-
-    #  fuse linear and batchnorm1d
-    quantized_model = torch.quantization.fuse_modules(quantized_model,
-                                                          [['mlp.mlp.0', 'mlp.mlp.1'],
-                                                           ['mlp.mlp.4', 'mlp.mlp.5'],
-                                                           ['mlp.mlp.8', 'mlp.mlp.9']])
-    #  fuse linear and relu
-    quantized_model = torch.quantization.fuse_modules(quantized_model,
-                                                          [['mlp.mlp.0', 'mlp.mlp.2'],
-                                                           ['mlp.mlp.4', 'mlp.mlp.6'],
-                                                           ['mlp.mlp.8', 'mlp.mlp.10']])
-
-    torch.quantization.prepare(quantized_model, inplace=True)
-    print(quantized_model)
-    _, _, _, _ = test(quantized_model, valid_data_loader, criterion, device)  # calibrate
-
-    model_static_quantized = torch.quantization.convert(quantized_model)
-
-    model_static_quantized.mlp.quantize = True
-    loss, auc, prauc, rce = test(model_static_quantized, test_data_loader, criterion, device)
-    print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+    model_static_quantized = static_quantization(model, valid_data_loader, criterion)
+    loss, auc, prauc, rce = test(model_static_quantized, test_data_loader, criterion, torch.device('cpu'))
+    print(f'static quantization test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     inference_time_cpu(model_static_quantized, test_data_loader)
+    print_size_of_model(model_static_quantized)
+
+    # QAT
+    model_qat = get_model(model_name, dataset, batch_norm=False).to(device) # batch norm not supported in train mode yet
+    early_stopper_qat = EarlyStopper(num_trials=2, save_path=f'{save_dir}/{model_name}_qat.pt')
+    model_qat = quantization_aware_training(model_qat, train_data_loader, valid_data_loader, early_stopper_qat, device=device, epochs=3)
+    loss, auc, prauc, rce = test(model_qat, test_data_loader, criterion, torch.device('cpu'))
+    print(f'qat test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+    inference_time_cpu(model_qat, test_data_loader)
+    print_size_of_model(model_qat)
 
     # original model
     loss, auc, prauc, rce = test(model, test_data_loader, criterion, device)
-    print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+    print(f'original test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     inference_time_cpu(model, test_data_loader)
+    print_size_of_model(model)
 
 
 if __name__ == '__main__':

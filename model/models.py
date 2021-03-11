@@ -6,6 +6,24 @@ import os
 from model.layers import FeaturesLinear, FactorizationMachine, FeaturesEmbedding, MultiLayerPerceptron, FieldWeightedFactorizationMachine
 
 
+class MultiLayerPerceptronModel(torch.nn.Module):
+    def __init__(self, field_dims, embed_dim, mlp_dims, dropout):
+        super().__init__()
+        self.embedding = FeaturesEmbedding(field_dims, embed_dim)
+        self.embed_output_dim = len(field_dims) * embed_dim
+        self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout)
+
+    def forward(self, x):
+        """
+        :param x: Long tensor of size ``(batch_size, num_fields)``
+        """
+        embed_x = self.embedding(x)
+
+        x = self.mlp(embed_x.view(-1, self.embed_output_dim))
+
+        return torch.sigmoid(x.squeeze(1))
+
+
 class DeepFactorizationMachineModel(torch.nn.Module):
     """
     A pytorch implementation of DeepFM.
@@ -36,7 +54,7 @@ class DeepFactorizationMachineModel(torch.nn.Module):
 
 
 class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
-    def __init__(self, field_dims, embed_dim, mlp_dims, dropout, use_lw=False, use_fwlw=False, use_emb_bag=False, use_qr_emb=False, quantize_dnn=False):
+    def __init__(self, field_dims, embed_dim, mlp_dims, dropout, use_lw=False, use_fwlw=False, use_emb_bag=False, use_qr_emb=False, quantize_dnn=False, batch_norm=True):
         super().__init__()
         self.num_fields = len(field_dims)
         self.use_lw = use_lw
@@ -47,7 +65,7 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         self.fwfm_linear = torch.nn.Linear(embed_dim, self.num_fields, bias=False)
         self.fwfm = FieldWeightedFactorizationMachine(field_dims, embed_dim, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
         self.embed_output_dim = len(field_dims) * embed_dim
-        self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout, quantize=quantize_dnn)
+        self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout, quantize=quantize_dnn, batch_norm=batch_norm)
 
     def forward(self, x):
         """

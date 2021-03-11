@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 
-from model.util import train_kd, train, test, get_dataset, get_model, inference_time_cpu, inference_time_gpu
+from model.util import train_kd, train, test, get_dataset, get_model, inference_time_cpu, inference_time_gpu, print_size_of_model
 from model.models import EarlyStopper
 
 
@@ -77,12 +77,16 @@ def main(dataset_name,
     inference_time_gpu(student_model, test_data_loader)
     inference_time_gpu(small_model, test_data_loader)
 
+    print_size_of_model(teacher_model)
+    print_size_of_model(student_model)
+    print_size_of_model(small_model)
+
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', default='criteo')
-    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train_ss.txt')
+    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train_ssss.txt')
     parser.add_argument('--epochs', type=int, default=1)
     parser.add_argument('--model_name', help='dfm or dfwfm', default='dfwfm')
     parser.add_argument('--model_path', help='path to checkpoint of model', default='./saved_models/dfwfm.pt')
