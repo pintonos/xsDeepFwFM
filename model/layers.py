@@ -98,7 +98,7 @@ class FieldWeightedFactorizationMachine(torch.nn.Module):
                 torch.nn.init.xavier_uniform_(embedding.weight.data)
         self.field_cov = torch.nn.Linear(self.num_fields, self.num_fields, bias=False)
 
-    def create_emb(self, m, ln, qr=False, qr_operation="mult", qr_collisions=1, qr_threshold=200):
+    def create_emb(self, m, ln, qr=False, qr_operation="mult", qr_collisions=4, qr_threshold=200):
         emb_l = torch.nn.ModuleList()
         for i in range(0, ln.size):
             n = ln[i]
@@ -109,9 +109,7 @@ class FieldWeightedFactorizationMachine(torch.nn.Module):
             else:
                 EE = torch.nn.EmbeddingBag(n, m, mode="sum", sparse=False)
                 torch.nn.init.xavier_uniform_(EE.weight.data)
-
             emb_l.append(EE)
-
         return emb_l
 
     def forward(self, x):
