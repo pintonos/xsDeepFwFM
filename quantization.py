@@ -40,7 +40,7 @@ def main(dataset_name,
     model.to(torch.device('cpu'))
 
     # dynamic quantization
-    model_dynamic_quantized  = torch.quantization.quantize_dynamic(model=model, qconfig_spec={'mlp'}, dtype=torch.qint8)
+    model_dynamic_quantized = torch.quantization.quantize_dynamic(model=model, qconfig_spec={'mlp'}, dtype=torch.qint8)
     loss, auc, prauc, rce = test(model_dynamic_quantized , test_data_loader, criterion, torch.device('cpu'))
     print(f'dynamic quantization test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     inference_time_cpu(model_dynamic_quantized , test_data_loader)
@@ -56,7 +56,7 @@ def main(dataset_name,
     # QAT
     model_qat = get_model(model_name, dataset, batch_norm=False).to(device) # batch norm not supported in train mode yet
     early_stopper_qat = EarlyStopper(num_trials=2, save_path=f'{save_dir}/{model_name}_qat.pt')
-    model_qat = quantization_aware_training(model_qat, train_data_loader, valid_data_loader, early_stopper_qat, device=device, epochs=3)
+    model_qat = quantization_aware_training(model_qat, train_data_loader, valid_data_loader, early_stopper_qat, device=device, epochs=10)
     loss, auc, prauc, rce = test(model_qat, test_data_loader, criterion, torch.device('cpu'))
     print(f'qat test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     inference_time_cpu(model_qat, test_data_loader)

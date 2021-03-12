@@ -17,7 +17,9 @@ def main(dataset_name,
          batch_size,
          weight_decay,
          device,
-         save_dir):
+         save_dir,
+         use_emb_bag,
+         use_qr_emb):
     device = torch.device(device)
     dataset = get_dataset(dataset_name, dataset_path)
     train_length = int(len(dataset) * 0.8)
@@ -40,16 +42,16 @@ def main(dataset_name,
     test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0)
 
     if model_path:
-        model = get_model(model_name, dataset).to(device)
+        model = get_model(model_name, dataset, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb).to(device)
         checkpoint = torch.load(model_path)
         model.load_state_dict(checkpoint['model_state_dict'])
     else:
-        model = get_model(model_name, dataset).to(device)
+        model = get_model(model_name, dataset, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb).to(device)
 
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-    early_stopper = EarlyStopper(num_trials=2, save_path=f'{save_dir}/{model_name}.pt')
+    early_stopper = EarlyStopper(num_trials=2, save_path=f"{save_dir}/{dataset_name}_{model_name}{'_emb_bag' if use_emb_bag else ''}{'_qr_emb' if use_qr_emb else ''}.pt")
 
     for epoch_i in range(epochs):
         train(model, optimizer, train_data_loader, criterion, device)
@@ -73,15 +75,17 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', default='criteo')
-    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train_ssss.txt')
+    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train.txt')
     parser.add_argument('--model_name', help='fm or dfm or fwfm or dfwfm', default='dfwfm')
     parser.add_argument('--model_path', help='path to checkpoint of model')
-    parser.add_argument('--epochs', type=int, default=1)
+    parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--learning_rate', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=2048)
     parser.add_argument('--weight_decay', type=float, default=1e-6)
     parser.add_argument('--device', default='cuda:0')
     parser.add_argument('--save_dir', default='./saved_models')
+    parser.add_argument('--use_emb_bag', type=int, default=1)
+    parser.add_argument('--use_qr_emb', type=int, default=0)
     args = parser.parse_args()
     main(args.dataset_name,
          args.dataset_path,
@@ -92,4 +96,6 @@ if __name__ == '__main__':
          args.batch_size,
          args.weight_decay,
          args.device,
-         args.save_dir)
+         args.save_dir,
+         args.use_emb_bag,
+         args.use_qr_emb)

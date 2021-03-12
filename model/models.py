@@ -54,6 +54,13 @@ class DeepFactorizationMachineModel(torch.nn.Module):
 
 
 class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
+    """
+    A pytorch implementation of DeepFwFM.
+
+    Reference:
+        Deng et al., DeepLight: Deep Lightweight Feature Interactions for Accelerating CTR Predictions in Ad Serving, 2021.
+    """
+
     def __init__(self, field_dims, embed_dim, mlp_dims, dropout, use_lw=False, use_fwlw=False, use_emb_bag=False, use_qr_emb=False, quantize_dnn=False, batch_norm=True):
         super().__init__()
         self.num_fields = len(field_dims)
@@ -91,6 +98,12 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
 
 
 class FieldWeightedFactorizationMachineModel(torch.nn.Module):
+    """
+    A pytorch implementation of Field Weighted Factorization Machines.
+
+    Reference:
+        Pan et al., Field-weighted factorization machines for click-through rate prediction in display advertising, 2018.
+    """
 
     def __init__(self, field_dims, embed_dim, use_lw=False, use_fwlw=False, use_emb_bag=False, use_qr_emb=False):
         super().__init__()
@@ -110,7 +123,7 @@ class FieldWeightedFactorizationMachineModel(torch.nn.Module):
         if self.use_emb_bag or self.use_qr_emb:
             embed_x = [self.fwfm.embeddings[i](torch.unsqueeze(x[:, i], 1)) for i in range(self.num_fields)]
         else:
-            embed_x = [self.fwfm.embeddings[i](x[:, i]) for i in range(self.num_fields)] # TODO most computation here?
+            embed_x = [self.fwfm.embeddings[i](x[:, i]) for i in range(self.num_fields)]
 
         fwfm_second_order = torch.sum(self.fwfm(torch.stack(embed_x)), dim=1, keepdim=True)
 

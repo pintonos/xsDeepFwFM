@@ -1,6 +1,7 @@
 /saved_models/
 .criteo
 .twitter
+.vscode
 
 
 # Byte-compiled / optimized / DLL files

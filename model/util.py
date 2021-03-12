@@ -45,7 +45,7 @@ def get_dataset(name, path):
         raise ValueError('unknown dataset name: ' + name)
 
 
-def get_model(name, dataset, mlp_dims=(400, 400, 400), batch_norm=True):
+def get_model(name, dataset, mlp_dims=(400, 400, 400), batch_norm=True, use_emb_bag=True, use_qr_emb=False):
     field_dims = dataset.field_dims
     if name == 'fm':
         return FactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_lw=False)
@@ -54,7 +54,7 @@ def get_model(name, dataset, mlp_dims=(400, 400, 400), batch_norm=True):
     elif name == 'fwfm':
         return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=False, use_qr_emb=False)
     elif name == 'dfwfm':
-        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=False, use_qr_emb=False, mlp_dims=mlp_dims, dropout=0.2, batch_norm=batch_norm)
+        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, mlp_dims=mlp_dims, dropout=0.2, batch_norm=batch_norm)
     elif name == 'mlp':
         return MultiLayerPerceptronModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims, dropout=0.2)
     else:
@@ -78,9 +78,7 @@ def train(model, optimizer, data_loader, criterion, device, log_interval=100):
             total_loss = 0
 
 
-def train_kd(student_model, teacher_model, optimizer, data_loader, device, alpha=0.9, temperature=3, log_interval=100):
-    criterion = torch.nn.BCELoss()
-
+def train_kd(student_model, teacher_model, optimizer, criterion, data_loader, device, alpha=0.9, temperature=3, log_interval=100):
     student_model.train()
     total_loss = 0
     tk0 = tqdm.tqdm(data_loader, smoothing=0, mininterval=1.0)
@@ -190,6 +188,7 @@ def inference_time_gpu(model, data_loader):
             if len(data_loader) < i < 100:  # warmup
                 y = model(fields)
             else:
+                torch.cuda.synchronize()
                 start = torch.cuda.Event(enable_timing=True)
                 end = torch.cuda.Event(enable_timing=True)
                 start.record()
@@ -253,7 +252,7 @@ def static_quantization(model, dataloader, criterion):
     model_static_quantized = torch.quantization.convert(model_prepared)
     return model_static_quantized
 
-def quantization_aware_training(model, train_data_loader, valid_data_loader, early_stopper, device, epochs=3):
+def quantization_aware_training(model, train_data_loader, valid_data_loader, early_stopper, device, epochs=5):
     model.train()
     model.mlp.quantize = True
     model.mlp.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
@@ -270,12 +269,6 @@ def quantization_aware_training(model, train_data_loader, valid_data_loader, ear
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model_prepared.parameters(), lr=0.001, weight_decay=1e-6)
     for epoch_i in range(epochs):
-        if epoch_i > epochs - 2:
-            # Freeze quantizer parameters
-            model_prepared.apply(torch.quantization.disable_observer)
-        if epoch_i > epochs - 1:
-            # Freeze batch norm mean and variance estimates
-            model_prepared.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
         train(model_prepared, optimizer, train_data_loader, criterion, device)
         loss, auc, prauc, rce = test(model_prepared, valid_data_loader, criterion, device)
         print('epoch:', epoch_i)

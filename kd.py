@@ -43,7 +43,7 @@ def main(dataset_name,
     optimizer = torch.optim.Adam(params=student_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     early_stopper = EarlyStopper(num_trials=2, save_path=f'{save_dir}/{model_name}_kd.pt')
     for epoch_i in range(epochs):
-        train_kd(student_model, teacher_model, optimizer, train_data_loader, device, alpha=alpha, temperature=temperature)
+        train_kd(student_model, teacher_model, optimizer, criterion, train_data_loader, device, alpha=alpha, temperature=temperature)
         loss, auc, prauc, rce = test(student_model, valid_data_loader, criterion, device)
         print('epoch:', epoch_i)
         print(f'student valid loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=2048)
     parser.add_argument('--weight_decay', type=float, default=1e-6)
     parser.add_argument('--alpha', type=float, default=0.9)
-    parser.add_argument('--temperature', type=float, default=2.5)
+    parser.add_argument('--temperature', type=float, default=3)
     parser.add_argument('--device', default='cuda:0')
     parser.add_argument('--save_dir', default='./saved_models')
     args = parser.parse_args()
