@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 import numpy as np
 
 from model.models import EarlyStopper
-from model.util import get_dataset, get_model, train, test, inference_time_cpu, inference_time_gpu, print_size_of_model
+from model.util import get_dataset, get_dataloaders, get_model, train, test, inference_time_cpu, inference_time_gpu, print_size_of_model
 
 
 def main(dataset_name,
@@ -20,26 +20,10 @@ def main(dataset_name,
          save_dir,
          use_emb_bag,
          use_qr_emb):
+         
     device = torch.device(device)
     dataset = get_dataset(dataset_name, dataset_path)
-    train_length = int(len(dataset) * 0.8)
-    valid_length = int(len(dataset) * 0.1)
-    test_length = len(dataset) - train_length - valid_length
-
-    # twitter dataset is already ordered according to train, valid, test sets
-    if dataset_name == 'twitter':
-        train_indices = np.arange(train_length)
-        valid_indices = np.arange(train_length, train_length+valid_length)
-        test_indices = np.arange(train_length + valid_length, len(dataset))
-
-        train_dataset, valid_dataset, test_dataset = torch.utils.data.Subset(dataset, train_indices), torch.utils.data.Subset(dataset, valid_indices), torch.utils.data.Subset(dataset, test_indices)
-    else:
-        train_dataset, valid_dataset, test_dataset = torch.utils.data.random_split(
-            dataset, (train_length, valid_length, test_length))
-
-    train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=0)
-    valid_data_loader = DataLoader(valid_dataset, batch_size=batch_size, num_workers=0)
-    test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0)
+    train_data_loader, valid_data_loader, test_data_loader = get_dataloaders(dataset, dataset_name, batch_size)
 
     if model_path:
         model = get_model(model_name, dataset, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb).to(device)
@@ -47,11 +31,11 @@ def main(dataset_name,
         model.load_state_dict(checkpoint['model_state_dict'])
     else:
         model = get_model(model_name, dataset, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb).to(device)
-
+    print(model)
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-    early_stopper = EarlyStopper(num_trials=2, save_path=f"{save_dir}/{dataset_name}_{model_name}{'_emb_bag' if use_emb_bag else ''}{'_qr_emb' if use_qr_emb else ''}.pt")
+    early_stopper = EarlyStopper(num_trials=2, save_path=f"{save_dir}/{dataset_name}_{model_name}{model.mlp_dims if model.mlp_dims else ''}{'_emb_bag' if use_emb_bag and not use_qr_emb else ''}{'_qr_emb' if use_qr_emb else ''}.pt")
 
     for epoch_i in range(epochs):
         train(model, optimizer, train_data_loader, criterion, device)
@@ -65,17 +49,13 @@ def main(dataset_name,
     loss, auc, prauc, rce = test(model, test_data_loader, criterion, device)
     print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
 
-    inference_time_cpu(model, test_data_loader)
-    inference_time_gpu(model, test_data_loader)
-    print_size_of_model(model)
-
 
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', default='criteo')
-    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train.txt')
+    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train_ssss.txt')
     parser.add_argument('--model_name', help='fm or dfm or fwfm or dfwfm', default='dfwfm')
     parser.add_argument('--model_path', help='path to checkpoint of model')
     parser.add_argument('--epochs', type=int, default=10)

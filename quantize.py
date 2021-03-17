@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 
-from model.util import test, get_dataset, get_model, inference_time_cpu, static_quantization, quantization_aware_training, print_size_of_model
+from model.util import test, get_dataset, get_dataloaders, get_model, inference_time_cpu, static_quantization, quantization_aware_training, print_size_of_model
 from model.models import EarlyStopper
 
 
@@ -17,14 +17,7 @@ def main(dataset_name,
 
     device = torch.device(device)
     dataset = get_dataset(dataset_name, dataset_path)
-    train_length = int(len(dataset) * 0.8)
-    valid_length = int(len(dataset) * 0.1)
-    test_length = len(dataset) - train_length - valid_length
-    train_dataset, valid_dataset, test_dataset = torch.utils.data.random_split(
-        dataset, (train_length, valid_length, test_length))
-    train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=0)
-    valid_data_loader = DataLoader(valid_dataset, batch_size=batch_size, num_workers=0)
-    test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0)
+    train_data_loader, valid_data_loader, test_data_loader = get_dataloaders(dataset, dataset_name, batch_size)
 
     model = get_model(model_name, dataset).to(device)
     criterion = torch.nn.BCELoss()
@@ -55,7 +48,7 @@ def main(dataset_name,
 
     # QAT
     model_qat = get_model(model_name, dataset, batch_norm=False).to(device) # batch norm not supported in train mode yet
-    early_stopper_qat = EarlyStopper(num_trials=2, save_path=f'{save_dir}/{model_name}_qat.pt')
+    early_stopper_qat = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_qat.pt')
     model_qat = quantization_aware_training(model_qat, train_data_loader, valid_data_loader, early_stopper_qat, device=device, epochs=10)
     loss, auc, prauc, rce = test(model_qat, test_data_loader, criterion, torch.device('cpu'))
     print(f'qat test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')

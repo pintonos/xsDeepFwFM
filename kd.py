@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 
-from model.util import train_kd, train, test, get_dataset, get_model, inference_time_cpu, inference_time_gpu, print_size_of_model
+from model.util import train_kd, train, test, get_dataset, get_dataloaders, get_model, inference_time_cpu, inference_time_gpu, print_size_of_model
 from model.models import EarlyStopper
 
 
@@ -20,14 +20,7 @@ def main(dataset_name,
 
     device = torch.device(device)
     dataset = get_dataset(dataset_name, dataset_path)
-    train_length = int(len(dataset) * 0.8)
-    valid_length = int(len(dataset) * 0.1)
-    test_length = len(dataset) - train_length - valid_length
-    train_dataset, valid_dataset, test_dataset = torch.utils.data.random_split(
-        dataset, (train_length, valid_length, test_length))
-    train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=0)
-    valid_data_loader = DataLoader(valid_dataset, batch_size=batch_size, num_workers=0)
-    test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0)
+    train_data_loader, valid_data_loader, test_data_loader = get_dataloaders(dataset, dataset_name, batch_size)
 
     teacher_model = get_model(model_name, dataset).to(device)
     checkpoint = torch.load(model_path)
@@ -41,7 +34,7 @@ def main(dataset_name,
     mlp_dims = (100, 100, 100)
     student_model = get_model(model_name, dataset, mlp_dims=mlp_dims).to(device)
     optimizer = torch.optim.Adam(params=student_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    early_stopper = EarlyStopper(num_trials=2, save_path=f'{save_dir}/{model_name}_kd.pt')
+    early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_kd{mlp_dims}.pt')
     for epoch_i in range(epochs):
         train_kd(student_model, teacher_model, optimizer, criterion, train_data_loader, device, alpha=alpha, temperature=temperature)
         loss, auc, prauc, rce = test(student_model, valid_data_loader, criterion, device)
@@ -56,7 +49,7 @@ def main(dataset_name,
 
     small_model = get_model(model_name, dataset, mlp_dims=mlp_dims).to(device)
     optimizer = torch.optim.Adam(params=small_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    early_stopper = EarlyStopper(num_trials=2, save_path=f'{save_dir}/{model_name}_small.pt')
+    early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_small{mlp_dims}.pt')
     for epoch_i in range(epochs):
         train(small_model, optimizer, train_data_loader, criterion, device)
         loss, auc, prauc, rce = test(small_model, valid_data_loader, criterion, device)

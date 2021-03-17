@@ -4,6 +4,7 @@ import tqdm
 import numpy as np
 from time import time, time_ns
 import os
+from torch.utils.data import DataLoader
 
 from dataset.criteo import CriteoDataset
 from dataset.twitter import TwitterDataset
@@ -45,6 +46,28 @@ def get_dataset(name, path):
         raise ValueError('unknown dataset name: ' + name)
 
 
+def get_dataloaders(dataset, dataset_name, batch_size):
+    train_length = int(len(dataset) * 0.8)
+    valid_length = int(len(dataset) * 0.1)
+    test_length = len(dataset) - train_length - valid_length
+
+    # twitter dataset is already ordered according to train, valid, test sets
+    if dataset_name == 'twitter':
+        train_indices = np.arange(train_length)
+        valid_indices = np.arange(train_length, train_length+valid_length)
+        test_indices = np.arange(train_length + valid_length, len(dataset))
+
+        train_dataset, valid_dataset, test_dataset = torch.utils.data.Subset(dataset, train_indices), torch.utils.data.Subset(dataset, valid_indices), torch.utils.data.Subset(dataset, test_indices)
+    else:
+        train_dataset, valid_dataset, test_dataset = torch.utils.data.random_split(
+            dataset, (train_length, valid_length, test_length), generator=torch.Generator().manual_seed(42))
+
+    train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=0)
+    valid_data_loader = DataLoader(valid_dataset, batch_size=batch_size, num_workers=0)
+    test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0)
+    return train_data_loader, valid_data_loader, test_data_loader
+
+
 def get_model(name, dataset, mlp_dims=(400, 400, 400), batch_norm=True, use_emb_bag=True, use_qr_emb=False):
     field_dims = dataset.field_dims
     if name == 'fm':
@@ -52,7 +75,7 @@ def get_model(name, dataset, mlp_dims=(400, 400, 400), batch_norm=True, use_emb_
     elif name == 'dfm':
         return DeepFactorizationMachineModel(field_dims=field_dims, embed_dim=10, mlp_dims=(16, 16), dropout=0.2)
     elif name == 'fwfm':
-        return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=False, use_qr_emb=False)
+        return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
     elif name == 'dfwfm':
         return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, mlp_dims=mlp_dims, dropout=0.2, batch_norm=batch_norm)
     elif name == 'mlp':
@@ -150,13 +173,14 @@ def profile_inference(model, data_loader, device):
     #print(prof.key_averages(group_by_stack_n=5).table(sort_by='self_cpu_time_total', row_limit=20))
 
 
-def inference_time_cpu(model, data_loader, num_threads=1):
+def inference_time_cpu(model, data_loader, num_threads=1, profile=False):
     device = 'cpu'
     model.to(device)
     torch.set_num_threads(num_threads)
     model.eval()
 
-    profile_inference(model, data_loader, device)
+    if profile:
+        profile_inference(model, data_loader, device)
     
     time_spent = []
     with torch.no_grad():
@@ -174,12 +198,13 @@ def inference_time_cpu(model, data_loader, num_threads=1):
     print('\tAvg time per item ({}-Threads)(ms):\t{:.5f}'.format(num_threads, np.mean(time_spent) / data_loader.batch_size))
 
 
-def inference_time_gpu(model, data_loader):
+def inference_time_gpu(model, data_loader, profile=False):
     device = 'cuda:0'
     model.to(device)
     model.eval()
 
-    profile_inference(model, data_loader, device)
+    if profile:
+        profile_inference(model, data_loader, device)
 
     time_spent = []
     with torch.no_grad():
