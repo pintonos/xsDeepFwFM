@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 import os
 
-from model.layers import FeaturesLinear, FactorizationMachine, FeaturesEmbedding, MultiLayerPerceptron, FieldWeightedFactorizationMachine
+from model.layers import FeaturesLinear, FeaturesEmbedding, MultiLayerPerceptron, FieldWeightedFactorizationMachine
 
 
 class MultiLayerPerceptronModel(torch.nn.Module):
@@ -21,36 +21,6 @@ class MultiLayerPerceptronModel(torch.nn.Module):
 
         x = self.mlp(embed_x.view(-1, self.embed_output_dim))
 
-        return torch.sigmoid(x.squeeze(1))
-
-
-class DeepFactorizationMachineModel(torch.nn.Module):
-    """
-    A pytorch implementation of DeepFM.
-
-    Reference:
-        H Guo, et al. DeepFM: A Factorization-Machine based Neural Network for CTR Prediction, 2017.
-    """
-
-    def __init__(self, field_dims, embed_dim, mlp_dims, dropout, use_linear=False):
-        super().__init__()
-        self.linear = FeaturesLinear(field_dims)
-        self.use_linear = use_linear
-        self.fm = FactorizationMachine(reduce_sum=True)
-        self.embedding = FeaturesEmbedding(field_dims, embed_dim)
-        self.embed_output_dim = len(field_dims) * embed_dim
-        self.mlp_dims = mlp_dims
-        self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout)
-
-    def forward(self, x):
-        """
-        :param x: Long tensor of size ``(batch_size, num_fields)``
-        """
-        embed_x = self.embedding(x)
-        if self.use_linear:
-            x = self.linear(x) + self.fm(embed_x) + self.mlp(embed_x.view(-1, self.embed_output_dim))
-        else:
-            x = self.fm(embed_x) + self.mlp(embed_x.view(-1, self.embed_output_dim))
         return torch.sigmoid(x.squeeze(1))
 
 
@@ -75,6 +45,7 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         self.fwfm = FieldWeightedFactorizationMachine(field_dims, embed_dim, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
         self.embed_output_dim = len(field_dims) * embed_dim
         self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout, quantize=quantize_dnn, batch_norm=batch_norm)
+        self.bias = torch.nn.Parameter(torch.Tensor([0.01]))
 
     def forward(self, x):
         """
@@ -88,13 +59,13 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         fwfm_second_order = torch.sum(self.fwfm(torch.stack(embed_x_2nd)), dim=1, keepdim=True)
 
         if self.use_lw and not self.use_fwlw:
-            x = self.linear(x) + fwfm_second_order + self.mlp(torch.cat(embed_x_2nd, 1))
+            x = self.linear(x) + fwfm_second_order + self.mlp(torch.cat(embed_x_2nd, 1)) + self.bias
         elif self.use_fwlw:
             fwfm_linear = torch.einsum('ijk,ik->ijk', [torch.stack(embed_x_2nd), self.fwfm_linear.weight])
             fwfm_first_order = torch.sum(torch.einsum('ijk->ji', [fwfm_linear]), dim=1, keepdim=True)
-            x = fwfm_first_order + fwfm_second_order + self.mlp(torch.cat(embed_x_2nd, 1))
+            x = fwfm_first_order + fwfm_second_order + self.mlp(torch.cat(embed_x_2nd, 1))  + self.bias
         else:
-            x = fwfm_second_order + self.mlp(torch.cat(embed_x_2nd, 1))
+            x = fwfm_second_order + self.mlp(torch.cat(embed_x_2nd, 1)) + self.bias
 
         return torch.sigmoid(x.squeeze(1))
 
@@ -117,6 +88,7 @@ class FieldWeightedFactorizationMachineModel(torch.nn.Module):
         self.linear = FeaturesLinear(field_dims)
         self.fwfm_linear = torch.nn.Linear(embed_dim, self.num_fields, bias=False)
         self.fwfm = FieldWeightedFactorizationMachine(field_dims, embed_dim, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
+        self.bias = torch.nn.Parameter(torch.Tensor([0.01]))
 
     def forward(self, x):
         """
@@ -130,40 +102,14 @@ class FieldWeightedFactorizationMachineModel(torch.nn.Module):
         fwfm_second_order = torch.sum(self.fwfm(torch.stack(embed_x_2nd)), dim=1, keepdim=True)
 
         if self.use_lw and not self.use_fwlw:
-            x = self.linear(x) + fwfm_second_order
+            x = self.linear(x) + fwfm_second_order + self.bias
         elif self.use_fwlw:
             fwfm_linear = torch.einsum('ijk,ik->ijk', [torch.stack(embed_x_2nd), self.fwfm_linear.weight])
             fwfm_first_order = torch.sum(torch.einsum('ijk->ji', [fwfm_linear]), dim=1, keepdim=True)
-            x = fwfm_first_order + fwfm_second_order
+            x = fwfm_first_order + fwfm_second_order + self.bias
         else:
-            x = fwfm_second_order
+            x = fwfm_second_order + self.bias
 
-        return torch.sigmoid(x.squeeze(1))
-
-
-class FactorizationMachineModel(torch.nn.Module):
-    """
-    A pytorch implementation of Factorization Machine.
-
-    Reference:
-        S Rendle, Factorization Machines, 2010.
-    """
-
-    def __init__(self, field_dims, embed_dim, use_lw=False):
-        super().__init__()
-        self.embedding = FeaturesEmbedding(field_dims, embed_dim)
-        self.linear = FeaturesLinear(field_dims)
-        self.use_lw = use_lw
-        self.fm = FactorizationMachine(reduce_sum=True)
-
-    def forward(self, x):
-        """
-        :param x: Long tensor of size ``(batch_size, num_fields)``
-        """
-        if self.use_lw:
-            x = self.linear(x) + self.fm(self.embedding(x))
-        else:
-            x = self.fm(self.embedding(x))
         return torch.sigmoid(x.squeeze(1))
 
 

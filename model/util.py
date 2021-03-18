@@ -8,8 +8,7 @@ from torch.utils.data import DataLoader
 
 from dataset.criteo import CriteoDataset
 from dataset.twitter import TwitterDataset
-from model.models import FactorizationMachineModel, DeepFactorizationMachineModel, \
-    FieldWeightedFactorizationMachineModel, DeepFieldWeightedFactorizationMachineModel, MultiLayerPerceptronModel
+from model.models import FieldWeightedFactorizationMachineModel, DeepFieldWeightedFactorizationMachineModel, MultiLayerPerceptronModel
 
 
 def compute_prauc(gt, pred):
@@ -70,11 +69,7 @@ def get_dataloaders(dataset, dataset_name, batch_size):
 
 def get_model(name, dataset, mlp_dims=(400, 400, 400), batch_norm=True, use_emb_bag=True, use_qr_emb=False):
     field_dims = dataset.field_dims
-    if name == 'fm':
-        return FactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_lw=False)
-    elif name == 'dfm':
-        return DeepFactorizationMachineModel(field_dims=field_dims, embed_dim=10, mlp_dims=(16, 16), dropout=0.2)
-    elif name == 'fwfm':
+    if name == 'fwfm':
         return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
     elif name == 'dfwfm':
         return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, mlp_dims=mlp_dims, dropout=0.2, batch_norm=batch_norm)
