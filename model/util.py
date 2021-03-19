@@ -44,32 +44,39 @@ def get_dataset(name, path):
     else:
         raise ValueError('unknown dataset name: ' + name)
 
-
-def get_dataloaders(dataset, dataset_name, batch_size):
-    train_length = int(len(dataset) * 0.8)
-    valid_length = int(len(dataset) * 0.1)
-    test_length = len(dataset) - train_length - valid_length
-
+def get_datasets(dataset, dataset_name):
     # twitter dataset is already ordered according to train, valid, test sets
     if dataset_name == 'twitter':
-        train_indices = np.arange(train_length)
-        valid_indices = np.arange(train_length, train_length+valid_length)
-        test_indices = np.arange(train_length + valid_length, len(dataset))
+        train_length = int(len(dataset) * 0.8)
+        valid_length = int(len(dataset) * 0.1)
+        test_length = len(dataset) - train_length - valid_length
 
-        train_dataset, valid_dataset, test_dataset = torch.utils.data.Subset(dataset, train_indices), torch.utils.data.Subset(dataset, valid_indices), torch.utils.data.Subset(dataset, test_indices)
+    # criteo split first 6 days in training and last for valid+testing
     else:
-        train_dataset, valid_dataset, test_dataset = torch.utils.data.random_split(
-            dataset, (train_length, valid_length, test_length), generator=torch.Generator().manual_seed(42))
+        train_length = int(len(dataset) * 0.85)
+        valid_length = int(len(dataset) * 0.075)
+        test_length = len(dataset) - train_length - valid_length
+        
+    train_indices = np.arange(train_length)
+    valid_indices = np.arange(train_length, train_length+valid_length)
+    test_indices = np.arange(train_length + valid_length, len(dataset))
+
+    return torch.utils.data.Subset(dataset, train_indices), torch.utils.data.Subset(dataset, valid_indices), torch.utils.data.Subset(dataset, test_indices)
+
+
+def get_dataloaders(dataset, dataset_name, batch_size):
+    train_dataset, valid_dataset, test_dataset = get_datasets(dataset, dataset_name)
 
     train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=0)
     valid_data_loader = DataLoader(valid_dataset, batch_size=batch_size, num_workers=0)
     test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=0)
+
     return train_data_loader, valid_data_loader, test_data_loader
 
 
 def get_model(name, dataset, mlp_dims=(400, 400, 400), batch_norm=True, use_emb_bag=True, use_qr_emb=False):
     field_dims = dataset.field_dims
-    if name == 'fwfm':
+    if name == 'fwfm' or mlp_dims == (0,0,0):
         return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
     elif name == 'dfwfm':
         return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, mlp_dims=mlp_dims, dropout=0.2, batch_norm=batch_norm)

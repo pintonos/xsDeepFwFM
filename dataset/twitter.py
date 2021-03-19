@@ -4,6 +4,7 @@ import struct
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
+import os
 
 import lmdb
 import numpy as np
@@ -11,6 +12,8 @@ import torch.utils.data
 from tqdm import tqdm
 
 import pandas as pd
+import dask.dataframe as dd
+
 
 sparse_features = ['a_is_verified', 'b_is_verified', 'b_follows_a', 'id',
                    'language', 'tweet_type', 'media', 'tweet_id', 'a_user_id', 'b_user_id', 'domains', 'links',
@@ -37,10 +40,14 @@ class TwitterDataset(torch.utils.data.Dataset):
         self.NUM_INT_FEATS = 11
         self.min_threshold = min_threshold # TODO wanted?
         self.LABEL_IDX = ['reply', 'retweet', 'retweet_comment', 'like'].index(twitter_label)
-        df = pd.read_parquet(dataset_path)
-        df.fillna(0, inplace=True)
-        df = df[label_names + dense_features + sparse_features]
-        df.to_csv('./tmp.txt', index=False, sep='\t', header=False)
+        #df = dd.read_parquet(dataset_path)
+        #print("read")
+        #df = df.fillna(0)
+        #print("filled")
+        #df = df[label_names + dense_features + sparse_features]
+        #print("df")
+        #df.compute().to_csv('./tmp.txt', index=False, sep='\t', header=False)
+        #print("csv")
         dataset_path = './tmp.txt'
         if rebuild_cache or not Path(cache_path).exists():
             shutil.rmtree(cache_path, ignore_errors=True)

@@ -48,6 +48,7 @@ def main(dataset_name,
 
     loss, auc, prauc, rce = test(model, test_data_loader, criterion, device)
     print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+    print_size_of_model(model)
 
 
 if __name__ == '__main__':
@@ -58,7 +59,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train_ssss.txt')
     parser.add_argument('--model_name', help='fwfm or dfwfm', default='dfwfm')
     parser.add_argument('--model_path', help='path to checkpoint of model')
-    parser.add_argument('--epochs', type=int, default=10)
+    parser.add_argument('--epochs', type=int, default=1)
     parser.add_argument('--learning_rate', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=2048)
     parser.add_argument('--weight_decay', type=float, default=1e-6)
