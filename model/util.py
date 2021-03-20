@@ -47,9 +47,9 @@ def get_dataset(name, path):
 def get_datasets(dataset, dataset_name):
     # twitter dataset is already ordered according to train, valid, test sets
     if dataset_name == 'twitter':
-        train_length = int(len(dataset) * 0.8)
-        valid_length = int(len(dataset) * 0.1)
-        test_length = len(dataset) - train_length - valid_length
+        train_length = 106254462
+        valid_length = 9760684
+        test_length = 9765321
 
     # criteo split first 6 days in training and last for valid+testing
     else:

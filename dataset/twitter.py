@@ -34,7 +34,7 @@ label_names = ['reply', 'retweet', 'retweet_comment', 'like']
 
 class TwitterDataset(torch.utils.data.Dataset):
 
-    def __init__(self, dataset_path=None, cache_path='.twitter', rebuild_cache=False, min_threshold=4, twitter_label='like'):
+    def __init__(self, dataset_path=None, cache_path='.twitter', rebuild_cache=False, min_threshold=10, twitter_label='like'):
         self.NUM_LABELS = 4
         self.NUM_FEATS = 47
         self.NUM_INT_FEATS = 11
