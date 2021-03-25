@@ -15,46 +15,19 @@ import pandas as pd
 import dask.dataframe as dd
 
 
-sparse_features = ['a_is_verified', 'b_is_verified', 'b_follows_a', 'id',
-                   'language', 'tweet_type', 'media', 'tweet_id', 'a_user_id', 'b_user_id', 'domains', 'links',
-                   'hashtags', 'tr', 'dt_day', 'dt_dow', 'dt_hour', 'a_count_combined', 'a_user_fer_count_delta_time',
-                   'a_user_fing_count_delta_time',
-                   'a_user_fering_count_delta_time', 'a_user_fing_count_mode',
-                   'a_user_fer_count_mode', 'a_user_fering_count_mode', 'count_ats',
-                   'count_char', 'count_words', 'tw_hash', 'tw_freq_hash', 'tw_first_word',
-                   'tw_second_word', 'tw_last_word', 'tw_llast_word', 'tw_hash0',
-                   'tw_hash1', 'tw_rt_uhash']  # = categorical features
-
-dense_features = ['timestamp', 'a_follower_count', 'a_following_count', 'a_account_creation',
-                  'b_follower_count', 'b_following_count', 'b_account_creation',
-                  'len_hashtags', 'len_domains', 'len_links', 'tw_len']  # = numerical features
-
-label_names = ['reply', 'retweet', 'retweet_comment', 'like']
-
-
 class TwitterDataset(torch.utils.data.Dataset):
 
-    def __init__(self, dataset_path=None, cache_path='.twitter', rebuild_cache=False, min_threshold=10, twitter_label='like'):
+    def __init__(self, dataset_path='G://dac//twitter.txt', cache_path='G://dac//.twitter', rebuild_cache=False, min_threshold=30, twitter_label='like'):
         self.NUM_LABELS = 4
         self.NUM_FEATS = 47
         self.NUM_INT_FEATS = 11
-        self.min_threshold = min_threshold # TODO wanted?
+        self.min_threshold = min_threshold # TODO mention in thesis, to make computional feasible
         self.LABEL_IDX = ['reply', 'retweet', 'retweet_comment', 'like'].index(twitter_label)
-        #df = dd.read_parquet(dataset_path)
-        #print("read")
-        #df = df.fillna(0)
-        #print("filled")
-        #df = df[label_names + dense_features + sparse_features]
-        #print("df")
-        #df.compute().to_csv('./tmp.txt', index=False, sep='\t', header=False)
-        #print("csv")
-        dataset_path = './tmp.txt'
         if rebuild_cache or not Path(cache_path).exists():
             shutil.rmtree(cache_path, ignore_errors=True)
             if dataset_path is None:
                 raise ValueError('create cache: failed: dataset_path is None')
             self.__build_cache(dataset_path, cache_path)
-        os.remove('./tmp.txt')
         self.env = lmdb.open(cache_path, create=False, lock=False, readonly=True)
         with self.env.begin(write=False) as txn:
             self.length = txn.stat()['entries'] - 1
@@ -111,7 +84,7 @@ class TwitterDataset(torch.utils.data.Dataset):
                 if len(values) != self.NUM_FEATS + self.NUM_LABELS:
                     continue
                 np_array = np.zeros(self.NUM_LABELS + self.NUM_FEATS, dtype=np.uint32)
-                np_array[self.LABEL_IDX] = int(values[self.LABEL_IDX])
+                np_array[:self.NUM_LABELS] = list(map(int, values[:self.NUM_LABELS]))
                 for i in range(self.NUM_LABELS, self.NUM_INT_FEATS + 1):
                     np_array[i] = feat_mapper[i].get(values[i], defaults[i])
                 for i in range(self.NUM_INT_FEATS + 1, self.NUM_FEATS + self.NUM_LABELS):
