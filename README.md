@@ -19,22 +19,52 @@ This repository is part of my master thesis.
 ## Results
 
 ### Criteo Dataset
-- Epochs: 5
-- Batch Size: 2048
-- 3 Deep Layers
+- Split: first 6 days for training & last day for 50% validation and 50% test
+- Epochs: 1
+- Batch Size (Training): 2048
 - Intel Xeon E3-1231v3 & NVIDIA GTX 970
+
+| Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) |  Notes |
+|-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|--------|
+| Embedding       | None          | (0,0,0)       | 0.4499    | 0.8030 | 0.6060    | 21.26 | 11,956,823    |  47.842   | 
+| EmbeddingBag    | None          | (0,0,0)       | 0.4498    | 0.8030 | 0.6061    | 21.27 | 11,956,823    |  47.842   | 
+| Embedding       | None          | (400,400,400) | 0.4479    | 0.8050 | 0.6099    | 21.60 | 12,436,824    |  49.780   |
+| EmbeddingBag    | None          | (400,400,400) | 0.4478    | 0.8051 | 0.6103    | 21.63 | 12,436,824    |  49.780   | 
+| QR EmbeddingBag | None          | (400,400,400) | 0.4517    | 0.8007 | 0.6034    | 20.93 |  4,294,354    |  17.216   | 4 collisions
+| QR EmbeddingBag | None          | (400,400,400) | 0.4538    | 0.7981 | 0.5997    | 20.56 |  2,260,814    |   9.082   | 16 collisions            
+| EmbeddingBag    | Dynamic       | (400,400,400) | 0.4478    | 0.8051 | 0.6102    | 21.62 | 11,959,223    |  48.35    |  
+| EmbeddingBag    | Static        | (400,400,400) | 0.4478    | 0.8051 | 0.6102    | 21.62 | NaN           |  24.46    | 
+| EmbeddingBag    | QAT           | (400,400,400) | 0.4409    | 0.8108 | 0.6167    | 22.53 | NaN           |  7.757    | *
+| EmbeddingBag    | None          | (100,100,100) | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | KD *
+| EmbeddingBag    | None          | (100,100,100) | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | without KD *
+
+
+| Embedding       |  # Deep Nodes | 1 (CPU) | 16 | 128   | 256   | 512 | 512 (GPU) | 1024 | 2048 | 4096 |
+|-----------------|---------------|---------|----|-------|-------|-----|-----------|------|------|------|
+| EmbeddingBag    | (0,0,0)       |
+| EmbeddingBag    | (400,400,400  |
+
+| Embedding       | Quantization  | 1 (CPU) | 16    | 128    | 256    | 512    |
+|-----------------|---------------|---------|-------|--------|--------|--------|
+| EmbeddingBag    | Dynamic       | 2.677   | 3.531 | 15.529 | 28.710 | 55.872
+| EmbeddingBag    | Static        |
+| EmbeddingBag    | QAT           |
+ 
+#### Ensembles
+| Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) |  Notes |
+|-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|--------|
+| QR EmbeddingBag | None          | (100,100,100) | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | QR + KD
+| EmbeddingBag    | Static        | (100,100,100) | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | KD + Quantization
+| QR EmbeddingBag | Dynamic       | (100,100,100) | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | QR + KD + Quantization
+| QR EmbeddingBag | Static        | (100,100,100) | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | QR + KD + Quantization
+| QR EmbeddingBag | QAT           | (100,100,100) | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | QR + KD + Quantization
+
+
+### Twitter Dataset
 
 | Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) |  Time per batch (1-Threads)(ms)  | Time per item (1-Threads)(ms)  |   Time per batch (CUDA)(ms)  | Time per item (CUDA)(ms) | Notes
 |-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|----------------------------------|--------------------------------|------------------------------|--------------------------|------------|
-| Embedding       | None          | (0,0,0)       | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | 168.089                          | 0.08207                        | 7.230                        | 0.00353                  |Epochs: 10
-| EmbeddingBag    | None          | (0,0,0)       | 0.4426    | 0.8090 | 0.6127    | 22.21 | 11,956,822    |  47.842   | 170.367                          | 0.08319                        | 9.368                        | 0.00457                  |Epochs: 10
-| Embedding       | None          | (400,400,400) | 0.4551    | 0.7872 | 0.5620    | 18.65 | 4,479,651     | 17.935    | 1.979                            | 1299.191                       | NaN                          | NaN                      | 
-| EmbeddingBag    | None          | (400,400,400) | 0.4404    | 0.8117 | 0.6183    | 22.64 | 12,436,823    |  49.78    | 1346.075                         | 0.65726                        | 11.157                       | 0.00545                  | 
-| QR EmbeddingBag | None          | (400,400,400) | 0.4573    | 0.7844 | 0.5750    | 19.38 | 1,481,681     |  5.949    | 5.062                            | 1476.571                       | NaN                          | NaN                      |                        
-| EmbeddingBag    | Dynamic       | (400,400,400) | 0.4353    | 0.8169 | 0.6260    | 23.50 | 11,959,222    |  48.35    | 272.060                          | 0.13284                        | NaN                          | NaN                      | 
-| EmbeddingBag    | Static        | (400,400,400) | 0.4353    | 0.8169 | 0.6260    | 23.49 | NaN           |  24.46    | 256.301                          | 0.12515                        | NaN                          | NaN                      | 
-| EmbeddingBag    | QAT           | (400,400,400) | 0.4409    | 0.8108 | 0.6167    | 22.53 | NaN           |  7.757    | NaN                              | NaN                            | NaN                          | NaN                      |Epochs: 10
-
+| Embedding       | None          | (400,400,400) | 0.3173    | 0.9365 |  0.9026   | 53.29 | 62,390,100    |  249.596  | NaN                              | NaN                            | NaN                          | Nan                      | Like, 3,5h per Epoch 
 
 
 ## References

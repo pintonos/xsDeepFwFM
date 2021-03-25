@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 import numpy as np
 
 from model.models import EarlyStopper
-from model.util import get_dataset, get_dataloaders, get_model, train, test, inference_time_cpu, inference_time_gpu, print_size_of_model
+from model.util import get_dataset, get_dataloaders, get_model, train, test, inference_time_cpu, inference_time_gpu, print_size_of_model, get_full_model_path
 
 
 def main(dataset_name,
@@ -19,23 +19,25 @@ def main(dataset_name,
          device,
          save_dir,
          use_emb_bag,
-         use_qr_emb):
+         use_qr_emb,
+         qr_collisions,
+         twitter_label):
          
     device = torch.device(device)
-    dataset = get_dataset(dataset_name, dataset_path)
-    train_data_loader, valid_data_loader, test_data_loader = get_dataloaders(dataset, dataset_name, batch_size)
+    dataset = get_dataset(dataset_name, dataset_path, twitter_label)
+    train_data_loader, valid_data_loader, test_data_loader = get_dataloaders(dataset, dataset_name, batch_size, random=False)
 
     if model_path:
-        model = get_model(model_name, dataset, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb).to(device)
+        model = get_model(model_name, dataset, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions).to(device)
         checkpoint = torch.load(model_path)
         model.load_state_dict(checkpoint['model_state_dict'])
     else:
-        model = get_model(model_name, dataset, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb).to(device)
+        model = get_model(model_name, dataset, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions).to(device)
     print(model)
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-    early_stopper = EarlyStopper(num_trials=2, save_path=f"{save_dir}/{dataset_name}_{model_name}{model.mlp_dims if model.mlp_dims else ''}{'_emb_bag' if use_emb_bag and not use_qr_emb else ''}{'_qr_emb' if use_qr_emb else ''}.pt")
+    early_stopper = EarlyStopper(num_trials=2, save_path=get_full_model_path(save_dir, dataset_name, twitter_label, model_name, model, use_emb_bag, use_qr_emb, qr_collisions))
 
     for epoch_i in range(epochs):
         train(model, optimizer, train_data_loader, criterion, device)
@@ -56,7 +58,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', default='criteo')
-    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train_ssss.txt')
+    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train.txt')
     parser.add_argument('--model_name', help='fwfm or dfwfm', default='dfwfm')
     parser.add_argument('--model_path', help='path to checkpoint of model')
     parser.add_argument('--epochs', type=int, default=1)
@@ -67,6 +69,8 @@ if __name__ == '__main__':
     parser.add_argument('--save_dir', default='./saved_models')
     parser.add_argument('--use_emb_bag', type=int, default=1)
     parser.add_argument('--use_qr_emb', type=int, default=0)
+    parser.add_argument('--qr_collisions', type=int, default=4)
+    parser.add_argument('--twitter_label', default='like')
     args = parser.parse_args()
     main(args.dataset_name,
          args.dataset_path,
@@ -79,4 +83,6 @@ if __name__ == '__main__':
          args.device,
          args.save_dir,
          args.use_emb_bag,
-         args.use_qr_emb)
+         args.use_qr_emb,
+         args.qr_collisions,
+         args.twitter_label)

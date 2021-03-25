@@ -31,48 +31,49 @@ def main(dataset_name,
     loss, auc, prauc, rce = test(teacher_model, test_data_loader, criterion, device)
     print(f'teacher test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
 
-    mlp_dims = (100, 100, 100)
-    student_model = get_model(model_name, dataset, mlp_dims=mlp_dims).to(device)
-    optimizer = torch.optim.Adam(params=student_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_kd{mlp_dims}.pt')
-    for epoch_i in range(epochs):
-        train_kd(student_model, teacher_model, optimizer, criterion, train_data_loader, device, alpha=alpha, temperature=temperature)
-        loss, auc, prauc, rce = test(student_model, valid_data_loader, criterion, device)
-        print('epoch:', epoch_i)
-        print(f'student valid loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
-        if not early_stopper.is_continuable(student_model, auc, epoch_i, optimizer, loss):
-            print(f'validation: best auc: {early_stopper.best_accuracy}')
-            break
-    
-    loss, auc, prauc, rce = test(student_model, test_data_loader, criterion, device)
-    print(f'student test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+    grid_dims = [(128, 128, 128), (64, 64, 64), (32, 32, 32), (16, 16)]
+    for mlp_dims in grid_dims:
+        student_model = get_model(model_name, dataset, mlp_dims=mlp_dims).to(device)
+        optimizer = torch.optim.Adam(params=student_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_kd{mlp_dims}.pt')
+        for epoch_i in range(epochs):
+            train_kd(student_model, teacher_model, optimizer, criterion, train_data_loader, device, alpha=alpha, temperature=temperature)
+            loss, auc, prauc, rce = test(student_model, valid_data_loader, criterion, device)
+            print('epoch:', epoch_i)
+            print(f'student valid loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+            if not early_stopper.is_continuable(student_model, auc, epoch_i, optimizer, loss):
+                print(f'validation: best auc: {early_stopper.best_accuracy}')
+                break
+        
+        loss, auc, prauc, rce = test(student_model, test_data_loader, criterion, device)
+        print(f'student test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
 
-    small_model = get_model(model_name, dataset, mlp_dims=mlp_dims).to(device)
-    optimizer = torch.optim.Adam(params=small_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_small{mlp_dims}.pt')
-    for epoch_i in range(epochs):
-        train(small_model, optimizer, train_data_loader, criterion, device)
-        loss, auc, prauc, rce = test(small_model, valid_data_loader, criterion, device)
-        print('epoch:', epoch_i)
-        print(f'small model valid loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
-        if not early_stopper.is_continuable(small_model, auc, epoch_i, optimizer, loss):
-            print(f'validation: best auc: {early_stopper.best_accuracy}')
-            break
-    
-    loss, auc, prauc, rce = test(small_model, test_data_loader, criterion, device)
-    print(f'small model test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+        small_model = get_model(model_name, dataset, mlp_dims=mlp_dims).to(device)
+        optimizer = torch.optim.Adam(params=small_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_small{mlp_dims}.pt')
+        for epoch_i in range(epochs):
+            train(small_model, optimizer, train_data_loader, criterion, device)
+            loss, auc, prauc, rce = test(small_model, valid_data_loader, criterion, device)
+            print('epoch:', epoch_i)
+            print(f'small model valid loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+            if not early_stopper.is_continuable(small_model, auc, epoch_i, optimizer, loss):
+                print(f'validation: best auc: {early_stopper.best_accuracy}')
+                break
+        
+        loss, auc, prauc, rce = test(small_model, test_data_loader, criterion, device)
+        print(f'small model test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
 
-    inference_time_cpu(teacher_model, test_data_loader)
-    inference_time_cpu(student_model, test_data_loader)
-    inference_time_cpu(small_model, test_data_loader)
+        '''inference_time_cpu(teacher_model, test_data_loader)
+        inference_time_cpu(student_model, test_data_loader)
+        inference_time_cpu(small_model, test_data_loader)
 
-    inference_time_gpu(teacher_model, test_data_loader)
-    inference_time_gpu(student_model, test_data_loader)
-    inference_time_gpu(small_model, test_data_loader)
+        inference_time_gpu(teacher_model, test_data_loader)
+        inference_time_gpu(student_model, test_data_loader)
+        inference_time_gpu(small_model, test_data_loader)
 
-    print_size_of_model(teacher_model)
-    print_size_of_model(student_model)
-    print_size_of_model(small_model)
+        print_size_of_model(teacher_model)
+        print_size_of_model(student_model)
+        print_size_of_model(small_model)'''
 
 if __name__ == '__main__':
     import argparse

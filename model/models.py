@@ -32,7 +32,7 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         Deng et al., DeepLight: Deep Lightweight Feature Interactions for Accelerating CTR Predictions in Ad Serving, 2021.
     """
 
-    def __init__(self, field_dims, embed_dim, mlp_dims, dropout, use_lw=False, use_fwlw=False, use_emb_bag=False, use_qr_emb=False, quantize_dnn=False, batch_norm=True):
+    def __init__(self, field_dims, embed_dim, mlp_dims, dropout, use_lw=False, use_fwlw=False, use_emb_bag=False, use_qr_emb=False, qr_collisions=4, quantize_dnn=False, batch_norm=True):
         super().__init__()
         self.num_fields = len(field_dims)
         self.use_lw = use_lw
@@ -42,7 +42,7 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         self.mlp_dims = mlp_dims
         self.linear = FeaturesLinear(field_dims)
         self.fwfm_linear = torch.nn.Linear(embed_dim, self.num_fields, bias=False)
-        self.fwfm = FieldWeightedFactorizationMachine(field_dims, embed_dim, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
+        self.fwfm = FieldWeightedFactorizationMachine(field_dims, embed_dim, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions)
         self.embed_output_dim = len(field_dims) * embed_dim
         self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout, quantize=quantize_dnn, batch_norm=batch_norm)
         self.bias = torch.nn.Parameter(torch.Tensor([0.01]))
@@ -52,18 +52,18 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         :param x: Long tensor of size ``(batch_size, num_fields)``
         """
         if self.use_emb_bag or self.use_qr_emb:
-            embed_x_2nd = [emb(torch.unsqueeze(x[:, i], 1)) for i, emb in enumerate(self.fwfm.embeddings)]
+            embed_x_2nd = [emb(torch.unsqueeze(x[:, i], 1).contiguous()) for i, emb in enumerate(self.fwfm.embeddings)]
         else:
-            embed_x_2nd = [emb(x[:, i]) for i, emb in enumerate(self.fwfm.embeddings)]
+            embed_x_2nd = [emb(x[:, i].contiguous()) for i, emb in enumerate(self.fwfm.embeddings)]
 
         fwfm_second_order = torch.sum(self.fwfm(torch.stack(embed_x_2nd)), dim=1, keepdim=True)
 
         if self.use_lw and not self.use_fwlw:
-            x = self.linear(x) + fwfm_second_order + self.mlp(torch.cat(embed_x_2nd, 1)) + self.bias
+            x = self.linear(x) + fwfm_second_order + self.mlp(torch.cat(embed_x_2nd, 1))
         elif self.use_fwlw:
             fwfm_linear = torch.einsum('ijk,ik->ijk', [torch.stack(embed_x_2nd), self.fwfm_linear.weight])
             fwfm_first_order = torch.sum(torch.einsum('ijk->ji', [fwfm_linear]), dim=1, keepdim=True)
-            x = fwfm_first_order + fwfm_second_order + self.mlp(torch.cat(embed_x_2nd, 1))  + self.bias
+            x = fwfm_first_order + fwfm_second_order + self.mlp(torch.cat(embed_x_2nd, 1)) + self.bias
         else:
             x = fwfm_second_order + self.mlp(torch.cat(embed_x_2nd, 1)) + self.bias
 

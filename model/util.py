@@ -36,15 +36,15 @@ def cross_entropy(targets, predictions):
     return ce
 
 
-def get_dataset(name, path):
+def get_dataset(name, path, twitter_label="like"):
     if name == 'twitter':
-        return TwitterDataset(path)
+        return TwitterDataset(path, twitter_label=twitter_label)
     elif name == 'criteo':
         return CriteoDataset(path)
     else:
         raise ValueError('unknown dataset name: ' + name)
 
-def get_datasets(dataset, dataset_name):
+def get_datasets(dataset, dataset_name, random=False):
     # twitter dataset is already ordered according to train, valid, test sets
     if dataset_name == 'twitter':
         train_length = 106254462
@@ -56,7 +56,9 @@ def get_datasets(dataset, dataset_name):
         train_length = int(len(dataset) * 0.85)
         valid_length = int(len(dataset) * 0.075)
         test_length = len(dataset) - train_length - valid_length
-        
+    if random:
+        return torch.utils.data.random_split(dataset, (train_length, valid_length, test_length), generator=torch.Generator().manual_seed(42)) 
+
     train_indices = np.arange(train_length)
     valid_indices = np.arange(train_length, train_length+valid_length)
     test_indices = np.arange(train_length + valid_length, len(dataset))
@@ -64,8 +66,8 @@ def get_datasets(dataset, dataset_name):
     return torch.utils.data.Subset(dataset, train_indices), torch.utils.data.Subset(dataset, valid_indices), torch.utils.data.Subset(dataset, test_indices)
 
 
-def get_dataloaders(dataset, dataset_name, batch_size):
-    train_dataset, valid_dataset, test_dataset = get_datasets(dataset, dataset_name)
+def get_dataloaders(dataset, dataset_name, batch_size, random=False):
+    train_dataset, valid_dataset, test_dataset = get_datasets(dataset, dataset_name, random)
 
     train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=0)
     valid_data_loader = DataLoader(valid_dataset, batch_size=batch_size, num_workers=0)
@@ -74,16 +76,21 @@ def get_dataloaders(dataset, dataset_name, batch_size):
     return train_data_loader, valid_data_loader, test_data_loader
 
 
-def get_model(name, dataset, mlp_dims=(400, 400, 400), batch_norm=True, use_emb_bag=True, use_qr_emb=False):
+def get_model(name, dataset, mlp_dims=(400, 400, 400), batch_norm=True, use_emb_bag=True, use_qr_emb=False, qr_collisions=4):
     field_dims = dataset.field_dims
     if name == 'fwfm' or mlp_dims == (0,0,0):
         return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
     elif name == 'dfwfm':
-        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, mlp_dims=mlp_dims, dropout=0.2, batch_norm=batch_norm)
+        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions, mlp_dims=mlp_dims, dropout=0.2, batch_norm=batch_norm)
     elif name == 'mlp':
         return MultiLayerPerceptronModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims, dropout=0.2)
     else:
         raise ValueError('unknown model name: ' + name)
+
+
+def get_full_model_path(save_dir, dataset_name, twitter_label, model_name, model, use_emb_bag, use_qr_emb, qr_collisions):
+    return f"{save_dir}/{dataset_name if dataset_name != 'twitter' else dataset_name + '_' + twitter_label}_{model_name}{model.mlp_dims if hasattr(model, 'mlp_dims') else ''} \ 
+                                                                        {'_emb_bag' if use_emb_bag and not use_qr_emb else ''}{'_qr_emb_' + qr_collisions if use_qr_emb else ''}.pt"
 
 
 def train(model, optimizer, data_loader, criterion, device, log_interval=100):
@@ -168,11 +175,11 @@ def profile_inference(model, data_loader, device):
             if len(data_loader) < i < 100:  # warmup
                 y = model(fields)
             else:
-                with torch.autograd.profiler.profile(with_stack=True, use_cuda=False) as prof:
+                with torch.autograd.profiler.profile(with_stack=True, use_cuda=True if device != 'cpu' else False) as prof:
                     y = model(fields)
 
-    print(prof.key_averages().table(sort_by='self_cpu_time_total', row_limit=5))
-    #print(prof.key_averages(group_by_stack_n=5).table(sort_by='self_cpu_time_total', row_limit=20))
+    print(prof.key_averages().table(sort_by='self_cpu_time_total', row_limit=10))
+    #print(prof.key_averages(group_by_stack_n=5).table(sort_by='self_cpu_time_total', row_limit=10))
 
 
 def inference_time_cpu(model, data_loader, num_threads=1, profile=False):

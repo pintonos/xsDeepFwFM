@@ -66,12 +66,12 @@ class MultiLayerPerceptron(torch.nn.Module):
 
 class FieldWeightedFactorizationMachine(torch.nn.Module):
 
-    def __init__(self, field_dims, embed_dim, use_emb_bag=False, use_qr_emb=False):
+    def __init__(self, field_dims, embed_dim, use_emb_bag=False, use_qr_emb=False, qr_collisions=4):
         super().__init__()
         self.num_fields = len(field_dims)
         self.embed_dim = embed_dim
         if use_emb_bag or use_qr_emb:
-            self.embeddings = self.create_emb(embed_dim, field_dims, use_qr_emb)
+            self.embeddings = self.create_emb(embed_dim, field_dims, use_qr_emb, qr_collisions=qr_collisions)
         else:
             self.embeddings = torch.nn.ModuleList([
                 torch.nn.Embedding(field_dim, embed_dim) for field_dim in field_dims
