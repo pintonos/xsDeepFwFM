@@ -21,7 +21,7 @@ class TwitterDataset(torch.utils.data.Dataset):
         self.NUM_LABELS = 4
         self.NUM_FEATS = 47
         self.NUM_INT_FEATS = 11
-        self.min_threshold = min_threshold # TODO mention in thesis, to make computional feasible
+        self.min_threshold = min_threshold
         self.LABEL_IDX = ['reply', 'retweet', 'retweet_comment', 'like'].index(twitter_label)
         if rebuild_cache or not Path(cache_path).exists():
             shutil.rmtree(cache_path, ignore_errors=True)

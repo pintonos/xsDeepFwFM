@@ -58,10 +58,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', default='criteo')
-    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train.txt')
+    parser.add_argument('--dataset_path', help='criteo/train.txt', default='./data/criteo/train.txt')
     parser.add_argument('--model_name', help='fwfm or dfwfm', default='dfwfm')
     parser.add_argument('--model_path', help='path to checkpoint of model')
-    parser.add_argument('--epochs', type=int, default=1)
+    parser.add_argument('--epochs', type=int, default=5)
     parser.add_argument('--learning_rate', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=2048)
     parser.add_argument('--weight_decay', type=float, default=1e-6)

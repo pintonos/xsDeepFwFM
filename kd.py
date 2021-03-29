@@ -35,7 +35,7 @@ def main(dataset_name,
     for mlp_dims in grid_dims:
         student_model = get_model(model_name, dataset, mlp_dims=mlp_dims).to(device)
         optimizer = torch.optim.Adam(params=student_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-        early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_kd{mlp_dims}.pt')
+        early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_kd_{mlp_dims}.pt')
         for epoch_i in range(epochs):
             train_kd(student_model, teacher_model, optimizer, criterion, train_data_loader, device, alpha=alpha, temperature=temperature)
             loss, auc, prauc, rce = test(student_model, valid_data_loader, criterion, device)
@@ -50,7 +50,7 @@ def main(dataset_name,
 
         small_model = get_model(model_name, dataset, mlp_dims=mlp_dims).to(device)
         optimizer = torch.optim.Adam(params=small_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-        early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_small{mlp_dims}.pt')
+        early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_small_{mlp_dims}.pt')
         for epoch_i in range(epochs):
             train(small_model, optimizer, train_data_loader, criterion, device)
             loss, auc, prauc, rce = test(small_model, valid_data_loader, criterion, device)
@@ -63,26 +63,15 @@ def main(dataset_name,
         loss, auc, prauc, rce = test(small_model, test_data_loader, criterion, device)
         print(f'small model test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
 
-        '''inference_time_cpu(teacher_model, test_data_loader)
-        inference_time_cpu(student_model, test_data_loader)
-        inference_time_cpu(small_model, test_data_loader)
-
-        inference_time_gpu(teacher_model, test_data_loader)
-        inference_time_gpu(student_model, test_data_loader)
-        inference_time_gpu(small_model, test_data_loader)
-
-        print_size_of_model(teacher_model)
-        print_size_of_model(student_model)
-        print_size_of_model(small_model)'''
 
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', default='criteo')
-    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G://dac//train_ssss.txt')
+    parser.add_argument('--dataset_path', help='criteo/train.txt', default='./data/criteo/train.txt')
     parser.add_argument('--epochs', type=int, default=1)
-    parser.add_argument('--model_path', help='path to checkpoint of model, only dfwfm', default='./saved_models/dfwfm.pt')
+    parser.add_argument('--model_path', help='path to checkpoint of model, only dfwfm', default='./saved_models/criteo_dfwfm(400, 400, 400)_emb_bag.pt')
     parser.add_argument('--learning_rate', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=2048)
     parser.add_argument('--weight_decay', type=float, default=1e-6)
