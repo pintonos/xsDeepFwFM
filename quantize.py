@@ -41,9 +41,10 @@ def main(dataset_name,
     print(f'dynamic quantization test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     print_size_of_model(model_dynamic_quantized)
     for batch_size in batch_sizes:
-        mini_data_loader = torch.utils.data.DataLoader(mini_dataset, batch_size=batch_size, num_workers=0)
+        batched_dataset = torch.utils.data.Subset(dataset, np.arange(batch_size * 500))
+        batched_data_loader = torch.utils.data.DataLoader(batched_dataset, batch_size=batch_size, num_workers=0)
         print(f"batch size:\t{batch_size}")
-        inference_time_cpu(model_dynamic_quantized , mini_data_loader)
+        inference_time_cpu(model_dynamic_quantized, batched_data_loader)
 
     # static quantization
     model_static_quantized = static_quantization(model, valid_data_loader, criterion)
@@ -51,9 +52,10 @@ def main(dataset_name,
     print(f'static quantization test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     print_size_of_model(model_static_quantized)
     for batch_size in batch_sizes:
-        mini_data_loader = torch.utils.data.DataLoader(mini_dataset, batch_size=batch_size, num_workers=0)
+        batched_dataset = torch.utils.data.Subset(dataset, np.arange(batch_size * 500))
+        batched_data_loader = torch.utils.data.DataLoader(batched_dataset, batch_size=batch_size, num_workers=0)
         print(f"batch size:\t{batch_size}")
-        inference_time_cpu(model_static_quantized , mini_data_loader)
+        inference_time_cpu(model_static_quantized, batched_data_loader)
 
     # QAT
     model_qat = get_model('dfwfm', dataset, batch_norm=False).to(device) # batch norm not supported in train mode yet
@@ -63,9 +65,10 @@ def main(dataset_name,
     print(f'qat test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     print_size_of_model(model_qat)
     for batch_size in batch_sizes:
-        mini_data_loader = torch.utils.data.DataLoader(mini_dataset, batch_size=batch_size, num_workers=0)
+        batched_dataset = torch.utils.data.Subset(dataset, np.arange(batch_size * 500))
+        batched_data_loader = torch.utils.data.DataLoader(batched_dataset, batch_size=batch_size, num_workers=0)
         print(f"batch size:\t{batch_size}")
-        inference_time_cpu(model_qat , mini_data_loader)
+        inference_time_cpu(model_qat, batched_data_loader)
 
 
 if __name__ == '__main__':

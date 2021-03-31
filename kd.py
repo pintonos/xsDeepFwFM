@@ -8,7 +8,6 @@ from model.models import EarlyStopper
 def main(dataset_name,
          dataset_path,
          epochs,
-         model_name,
          model_path,
          learning_rate,
          batch_size,
@@ -18,6 +17,7 @@ def main(dataset_name,
          device,
          save_dir):
 
+    model_name = 'dfwfm'
     device = torch.device(device)
     dataset = get_dataset(dataset_name, dataset_path)
     train_data_loader, valid_data_loader, test_data_loader = get_dataloaders(dataset, dataset_name, batch_size)
@@ -31,7 +31,8 @@ def main(dataset_name,
     loss, auc, prauc, rce = test(teacher_model, test_data_loader, criterion, device)
     print(f'teacher test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
 
-    grid_dims = [(128, 128, 128), (64, 64, 64), (32, 32, 32), (16, 16)]
+    #grid_dims = [(128, 128, 128), (64, 64, 64), (32, 32, 32), (16, 16)]
+    grid_dims = [(32, 32, 32), (16, 16)]
     for mlp_dims in grid_dims:
         student_model = get_model(model_name, dataset, mlp_dims=mlp_dims).to(device)
         optimizer = torch.optim.Adam(params=student_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -46,7 +47,8 @@ def main(dataset_name,
                 break
         
         loss, auc, prauc, rce = test(student_model, test_data_loader, criterion, device)
-        print(f'student test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+        print(f'{mlp_dims} student test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+        print_size_of_model(student_model)
 
         small_model = get_model(model_name, dataset, mlp_dims=mlp_dims).to(device)
         optimizer = torch.optim.Adam(params=small_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -61,7 +63,8 @@ def main(dataset_name,
                 break
         
         loss, auc, prauc, rce = test(small_model, test_data_loader, criterion, device)
-        print(f'small model test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+        print(f'{mlp_dims} small model test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+        print_size_of_model(small_model)
 
 
 if __name__ == '__main__':
@@ -70,7 +73,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', default='criteo')
     parser.add_argument('--dataset_path', help='criteo/train.txt', default='./data/criteo/train.txt')
-    parser.add_argument('--epochs', type=int, default=1)
+    parser.add_argument('--epochs', type=int, default=5)
     parser.add_argument('--model_path', help='path to checkpoint of model, only dfwfm', default='./saved_models/criteo_dfwfm(400, 400, 400)_emb_bag.pt')
     parser.add_argument('--learning_rate', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=2048)
@@ -83,7 +86,6 @@ if __name__ == '__main__':
     main(args.dataset_name,
          args.dataset_path,
          args.epochs,
-         args.model_name,
          args.model_path,
          args.learning_rate,
          args.batch_size,
