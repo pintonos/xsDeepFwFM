@@ -120,7 +120,6 @@ def train_kd(student_model, teacher_model, optimizer, criterion, data_loader, de
         output_teacher = teacher_model(fields)
 
         loss = loss_fn_kd(output_student, output_teacher, target.float(), alpha, temperature)
-        loss = criterion(output_student, target.float())
 
         optimizer.zero_grad()
 
@@ -143,8 +142,7 @@ def loss_fn_kd(outputs, teacher_outputs, y, alpha, temperature):
     """
     kd_loss = torch.nn.KLDivLoss()(torch.nn.functional.log_softmax(outputs / temperature, dim=0),
                                 torch.nn.functional.softmax(teacher_outputs / temperature, dim=0)) * (alpha * temperature * temperature) + \
-                torch.nn.functional.binary_cross_entropy_with_logits(outputs, y) * (1. - alpha)
-
+                torch.nn.functional.binary_cross_entropy(outputs, y) * (1. - alpha) # TODO update in thesis
     return kd_loss
 
 

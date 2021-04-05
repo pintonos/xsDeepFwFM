@@ -4,16 +4,20 @@ import numpy as np
 
 def plot_kd_val_loss():
     epochs = np.arange(1, 6)
-    val_losses_128_student = [0.45576, 0.4461012, 0.445527, 0.445302, 0.445113]
+    val_losses_128_student = [0.447286, 0.4461012, 0.445527, 0.445302, 0.445113]
     val_losses_128_small = [0.447338, 0.445934, 0.445934, 0.445934, 0.445934]
     val_losses_32_student = [0.447950, 0.446673, 0.446185, 0.445933, 0.445873]
     val_losses_32_small = [0.447948, 0.446767, 0.446286, 0.446066, 0.445916]
+    val_losses_16_student = [0.448158, 0.447003, 0.446564, 0.446368, 0.446204]
+    val_losses_16_small = [0.448191, 0.447019, 0.446597, 0.446390, 0.446236]
 
     plt.figure(figsize=(10, 5))
     plt.plot(epochs, val_losses_128_student, label="(128,128,128) + KD", color="orange", marker='D')
     plt.plot(epochs, val_losses_128_small, label="(128,128,128)", linestyle="dashed", color="orange", marker='D')
     plt.plot(epochs, val_losses_32_student, label="(32,32,32) + KD", color="blue", marker='D')
     plt.plot(epochs, val_losses_32_small, label="(32,32,32)", linestyle="dashed", color="blue", marker='D')
+    plt.plot(epochs, val_losses_16_student, label="(16,16) + KD", color="red", marker='D')
+    plt.plot(epochs, val_losses_16_small, label="(16,16)", linestyle="dashed", color="red", marker='D')
     plt.xlabel("Epochs")
     plt.xticks(np.arange(1, 6, 1.0))
     plt.ylabel("Validation Loss")

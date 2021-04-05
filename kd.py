@@ -31,12 +31,11 @@ def main(dataset_name,
     loss, auc, prauc, rce = test(teacher_model, test_data_loader, criterion, device)
     print(f'teacher test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
 
-    #grid_dims = [(128, 128, 128), (64, 64, 64), (32, 32, 32), (16, 16)]
-    grid_dims = [(32, 32, 32), (16, 16)]
+    grid_dims = [(128, 128, 128), (64, 64, 64), (32, 32, 32), (16, 16)]
     for mlp_dims in grid_dims:
         student_model = get_model(model_name, dataset, mlp_dims=mlp_dims).to(device)
         optimizer = torch.optim.Adam(params=student_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-        early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_kd_{mlp_dims}.pt')
+        early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_kd_{mlp_dims}_{alpha}_{epochs}_epochs.pt')
         for epoch_i in range(epochs):
             train_kd(student_model, teacher_model, optimizer, criterion, train_data_loader, device, alpha=alpha, temperature=temperature)
             loss, auc, prauc, rce = test(student_model, valid_data_loader, criterion, device)
@@ -52,7 +51,7 @@ def main(dataset_name,
 
         small_model = get_model(model_name, dataset, mlp_dims=mlp_dims).to(device)
         optimizer = torch.optim.Adam(params=small_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-        early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_small_{mlp_dims}.pt')
+        early_stopper = EarlyStopper(num_trials=2, save_path=f'{model_path[:-3]}_small_{mlp_dims}_{epochs}_epochs.pt')
         for epoch_i in range(epochs):
             train(small_model, optimizer, train_data_loader, criterion, device)
             loss, auc, prauc, rce = test(small_model, valid_data_loader, criterion, device)
@@ -72,9 +71,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_name', default='criteo')
-    parser.add_argument('--dataset_path', help='criteo/train.txt', default='./data/criteo/train.txt')
+    parser.add_argument('--dataset_path', help='criteo/train.txt', default='G:\\dac\\train_sss.txt')
     parser.add_argument('--epochs', type=int, default=5)
-    parser.add_argument('--model_path', help='path to checkpoint of model, only dfwfm', default='./saved_models/criteo_dfwfm(400, 400, 400)_emb_bag.pt')
+    parser.add_argument('--model_path', help='path to checkpoint of model, only dfwfm', default='./saved_models/criteo_dfwfm(400, 400, 400)_emb_bag_ssss.pt')
     parser.add_argument('--learning_rate', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=2048)
     parser.add_argument('--weight_decay', type=float, default=1e-6)
