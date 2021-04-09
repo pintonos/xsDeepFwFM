@@ -14,15 +14,19 @@ def main(dataset_name,
          batch_size,
          weight_decay,
          device,
-         save_dir):
+         save_dir,
+         use_emb_bag,
+         use_qr_emb,
+         qr_collisions,
+         twitter_label):
 
     device = torch.device(device)
-    dataset = get_dataset(dataset_name, dataset_path)
+    dataset = get_dataset(dataset_name, dataset_path, twitter_label)
     train_data_loader, valid_data_loader, test_data_loader = get_dataloaders(dataset, dataset_name, batch_size)
     mini_dataset = torch.utils.data.Subset(dataset, np.arange(1024 * 500))
     batch_sizes = [1, 16, 32, 64, 128, 256, 512, 1024]
 
-    model = get_model('dfwfm', dataset).to(device)
+    model = get_model('dfwfm', dataset, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions).to(device)
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
@@ -84,6 +88,10 @@ if __name__ == '__main__':
     parser.add_argument('--weight_decay', type=float, default=1e-6)
     parser.add_argument('--device', default='cuda:0')
     parser.add_argument('--save_dir', default='./saved_models')
+    parser.add_argument('--use_emb_bag', type=int, default=1)
+    parser.add_argument('--use_qr_emb', type=int, default=0)
+    parser.add_argument('--qr_collisions', type=int, default=4)
+    parser.add_argument('--twitter_label', default='like')
     args = parser.parse_args()
     main(args.dataset_name,
          args.dataset_path,
@@ -93,4 +101,8 @@ if __name__ == '__main__':
          args.batch_size,
          args.weight_decay,
          args.device,
-         args.save_dir)
+         args.save_dir,
+         args.use_emb_bag,
+         args.use_qr_emb,
+         args.qr_collisions,
+         args.twitter_label)

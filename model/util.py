@@ -142,7 +142,7 @@ def loss_fn_kd(outputs, teacher_outputs, y, alpha, temperature):
     """
     kd_loss = torch.nn.KLDivLoss()(torch.nn.functional.log_softmax(outputs / temperature, dim=0),
                                 torch.nn.functional.softmax(teacher_outputs / temperature, dim=0)) * (alpha * temperature * temperature) + \
-                torch.nn.functional.binary_cross_entropy(outputs, y) * (1. - alpha) # TODO update in thesis
+                torch.nn.functional.binary_cross_entropy(outputs, y) * (1. - alpha)
     return kd_loss
 
 

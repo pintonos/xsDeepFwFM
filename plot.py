@@ -4,16 +4,20 @@ import numpy as np
 
 def plot_kd_val_loss():
     epochs = np.arange(1, 6)
-    val_losses_128_student = [0.447286, 0.4461012, 0.445527, 0.445302, 0.445113]
-    val_losses_128_small = [0.447338, 0.445934, 0.445934, 0.445934, 0.445934]
-    val_losses_32_student = [0.447950, 0.446673, 0.446185, 0.445933, 0.445873]
-    val_losses_32_small = [0.447948, 0.446767, 0.446286, 0.446066, 0.445916]
-    val_losses_16_student = [0.448158, 0.447003, 0.446564, 0.446368, 0.446204]
+    val_losses_128_student = [0.451030, 0.449960, 0.449685, 0.449376, 0.449314]
+    val_losses_128_small = [0.447326, 0.445907, 0.445444, 0.445095, 0.444981]
+    val_losses_64_student = [0.451616,0.450325, 0.449866, 0.449531, 0.449425]
+    val_losses_64_small = [0.447748, 0.446368, 0.445790, 0.445482, 0.445273]
+    val_losses_32_student = [0.451784, 0.450430, 0.450050, 0.449770, 0.449682]
+    val_losses_32_small = [0.447997, 0.446669, 0.446322, 0.446094, 0.445911]
+    val_losses_16_student = [0.452229, 0.451208, 0.450208, 0.450020, 0.449928]
     val_losses_16_small = [0.448191, 0.447019, 0.446597, 0.446390, 0.446236]
 
     plt.figure(figsize=(10, 5))
     plt.plot(epochs, val_losses_128_student, label="(128,128,128) + KD", color="orange", marker='D')
     plt.plot(epochs, val_losses_128_small, label="(128,128,128)", linestyle="dashed", color="orange", marker='D')
+    plt.plot(epochs, val_losses_64_student, label="(64,64,64) + KD", color="yellow", marker='D')
+    plt.plot(epochs, val_losses_64_small, label="(64,64,64)", linestyle="dashed", color="yellow", marker='D')
     plt.plot(epochs, val_losses_32_student, label="(32,32,32) + KD", color="blue", marker='D')
     plt.plot(epochs, val_losses_32_small, label="(32,32,32)", linestyle="dashed", color="blue", marker='D')
     plt.plot(epochs, val_losses_16_student, label="(16,16) + KD", color="red", marker='D')

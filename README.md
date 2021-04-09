@@ -35,18 +35,19 @@ This repository is part of my master thesis.
 | EmbeddingBag    | Dynamic       | (400,400,400) | 0.4455    | 0.8076 | 0.6143    | 22.02 | 11,959,223    |  48.35    |  
 | EmbeddingBag    | Static        | (400,400,400) | 0.4456    | 0.8076 | 0.6142    | 22.01 | NaN           |  24.46    | 
 | EmbeddingBag    | QAT           | (400,400,400) | 0.4459    | 0.8073 | 0.6135    | 21.94 | NaN           |  24.46    | 5 Epochs
-| EmbeddingBag    | None          | (128,128,128) | 0.4461    | 0.8070 | 0.6131    | 21.91 | 12,040,792    |  48.189   | KD  
-| EmbeddingBag    | None          | (128,128,128) | 0.4459    | 0.8072 | 0.6135    | 22.95 | 12,040,792    |  48.189   | without KD 
+| EmbeddingBag    | None          | (128,128,128) | 0.4502    | 0.8025 | 0.6060    | 21.20 | 12,040,792    |  48.189   | KD  
+| EmbeddingBag    | None          | (128,128,128) | 0.4460    | 0.8071 | 0.6134    | 21.93 | 12,040,792    |  48.189   | without KD 
 | EmbeddingBag    | None          | (128,128,128) | 0.4482    | 0.8046 | ----------------------------------------------| KD, alpha 0.9, 1 epoch
 | EmbeddingBag    | None          | (128,128,128) | 0.4483    | 0.8046 | ----------------------------------------------| KD, alpha 0.5, 1 epoch
 | EmbeddingBag    | None          | (128,128,128) | 0.4483    | 0.8046 | ----------------------------------------------| KD, alpha 0.1, 1 epoch *
 | EmbeddingBag    | None          | (128,128,128) | 0.4483    | 0.8046 | ----------------------------------------------| without KD, 1 epoch
-| EmbeddingBag    | None          | (64,64,64)    | 0.4466    | 0.8065 | 0.6121    | 21.83 | 11,956,822    |  47.842   | KD
-| EmbeddingBag    | None          | (64,64,64)    | 0.4467    | 0.8064 | 0.6121    | 21.81 | 11,956,822    |  47.842   | without KD 
-| EmbeddingBag    | None          | (32,32,32)    | 0.4470    | 0.8061 | 0.6112    | 21.75 | 11,971,672    |  47.911   | KD * TODO more parameters? why?
-| EmbeddingBag    | None          | (32,32,32)    | 0.4470    | 0.8060 | 0.6112    | 21.75 | 11,971,672    |  47.911   | without KD 
-| EmbeddingBag    | None          | (16,16)       | 0.4473    | 0.8058 | 0.6107    | 21.70 | 11,963,432    |  47.875   | KD 
+| EmbeddingBag    | None          | (64,64,64)    | 0.4502    | 0.8024 | 0.6058    | 21.20 | 11,990,616    |  47.987   | KD, similar to 128?
+| EmbeddingBag    | None          | (64,64,64)    | 0.4463    | 0.8068 | 0.6125    | 21.88 | 11,990,616    |  47.987   | without KD 
+| EmbeddingBag    | None          | (32,32,32)    | 0.4504    | 0.8022 | 0.6055    | 21.16 | 11,971,672    |  47.911   | KD
+| EmbeddingBag    | None          | (32,32,32)    | 0.4471    | 0.8060 | 0.6111    | 21.75 | 11,971,672    |  47.911   | without KD 
+| EmbeddingBag    | None          | (16,16)       | 0.4507    | 0.8019 | 0.6048    | 21.11 | 11,963,432    |  47.875   | KD 
 | EmbeddingBag    | None          | (16,16)       | 0.4474    | 0.8057 | 0.6107    | 21.70 | 11,963,432    |  47.875   | without KD 
+
 
 #### Embeddings
 | Embedding       |  # Deep Nodes | 1 (CPU) | 8     | 16     | 32     | 64     | 128    | 256     | 512     | 1024    | 512 (GPU) | 1024    | 2048    | 4096    | Notes |
@@ -80,18 +81,30 @@ This repository is part of my master thesis.
 #### Ensembles
 | Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) |  Notes |
 |-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|--------|
-| QR EmbeddingBag | Dynamic       | (64,64,64) | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | QR + Quantization
-| QR EmbeddingBag | None          | (64,64,64) | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | QR + KD
-| EmbeddingBag    | Dynamic       | (64,64,64) | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | KD + Quantization
-| QR EmbeddingBag | Dynamic       | (64,64,64) | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | QR + KD + Quantization
+| QR EmbeddingBag | Dynamic       | (400,400,400) | 0.4468    | 0.8062 | 0.6121    | 21.80 | Nan           |  15.789   | 4 coll
+| QR EmbeddingBag | Static        | (400,400,400) | 0.4468    | 0.8061 | 0.6120    | 21.79 | Nan           |  15.777   | 4 coll
+| QR EmbeddingBag | Dynamic       | (400,400,400) | 0.4489    | 0.8039 | 0.6085    | 21.44 | Nan           |   7.655   | 16 coll
+| QR EmbeddingBag | Static        | (400,400,400) | 0.4489    | 0.8038 | 0.6083    | 21.42 | Nan           |   7.643   | 16 coll
+
+
+<!-- | QR EmbeddingBag | None          | (64,64,64)    | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | QR + KD
+| EmbeddingBag    | Dynamic       | (64,64,64)    | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | KD + Quantization
+| QR EmbeddingBag | Dynamic       | (64,64,64)    | 0.4424    | 0.8091 | 0.6131    | 22.24 | 11,956,822    |  47.842   | QR + KD + Quantization -->
+
+| Embedding       | Quantization  | # Deep Nodes  | 1 (CPU) | 16    | 32     | 64     | 128    | 256      | 512     | 1024    | Notes |
+|-----------------|---------------|---------------|---------|-------|--------|--------|--------|----------|---------|---------|-------|
+| QR EmbeddingBag | Dynamic       | (400,400,400) | 5.180   | 6.494 | 8.038  | 11.406 | 16.702 | 37.160   | 58.712 *| 121.752 | 4 
+| QR EmbeddingBag | Static        | (400,400,400) | 5.166   | 6.770 | 8.414  | 11.386 | 16.178 | 28.106   | 50.376 *| 103.644 | 4
+| QR EmbeddingBag | Dynamic       | (400,400,400) | 4.178   | 5.082 | 7.232  | 10.446 | 16.482 | 30.586   | 56.124 *| 119.338 | 16
+| QR EmbeddingBag | Static        | (400,400,400) | 5.516   | 6.318 | 8.128  | 11.036 | 16.990 | 29.040   | 52.546 *| 109.302 | 16
 
 
 ### Twitter Dataset
 
-| Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) | Notes
+| Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) | Notes      |
 |-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|------------|
-| Embedding       | None          | (400,400,400) | 0.3173    | 0.9365 |  0.9026   | 53.29 | 62,390,64    |  249.596  | Like, 1 Epoch
-| EmbeddingBag    | None          | (400,400,400) | 0.1018    | 0.8407 |  0.1279   | 14.38 | 62,390,64    |  249.596  | Reply, 1 Epoch
+| Embedding       | None          | (400,400,400) | 0.3173    | 0.9365 |  0.9026   | 53.29 | 62,390,64    |  249.596   | Like, 1 Epoch
+| EmbeddingBag    | None          | (400,400,400) | 0.1018    | 0.8407 |  0.1279   | 14.38 | 62,390,64    |  249.596   | Reply, 1 Epoch
 
 
 ## References
