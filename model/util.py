@@ -88,8 +88,8 @@ def get_model(name, dataset, mlp_dims=(400, 400, 400), batch_norm=True, use_emb_
         raise ValueError('unknown model name: ' + name)
 
 
-def get_full_model_path(save_dir, dataset_name, twitter_label, model_name, model, use_emb_bag, use_qr_emb, qr_collisions):
-    return f"{save_dir}/{dataset_name if dataset_name != 'twitter' else dataset_name + '_' + twitter_label}_{model_name}{model.mlp_dims if hasattr(model, 'mlp_dims') else ''}{'_emb_bag' if use_emb_bag and not use_qr_emb else ''}{'_qr_emb_' + str(qr_collisions) if use_qr_emb else ''}.pt"
+def get_full_model_path(save_dir, dataset_name, twitter_label, model_name, model, use_emb_bag, use_qr_emb, qr_collisions, epochs):
+    return f"{save_dir}/{dataset_name if dataset_name != 'twitter' else dataset_name + '_' + twitter_label}_{model_name}{model.mlp_dims if hasattr(model, 'mlp_dims') else ''}{'_emb_bag' if use_emb_bag and not use_qr_emb else ''}{'_qr_emb_' + str(qr_collisions) if use_qr_emb else ''}_epochs_{epochs}.pt"
 
 
 def train(model, optimizer, data_loader, criterion, device, log_interval=100):

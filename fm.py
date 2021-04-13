@@ -37,7 +37,7 @@ def main(dataset_name,
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-    early_stopper = EarlyStopper(num_trials=2, save_path=get_full_model_path(save_dir, dataset_name, twitter_label, model_name, model, use_emb_bag, use_qr_emb, qr_collisions))
+    early_stopper = EarlyStopper(num_trials=2, save_path=get_full_model_path(save_dir, dataset_name, twitter_label, model_name, model, use_emb_bag, use_qr_emb, qr_collisions, epochs))
 
     for epoch_i in range(epochs):
         train(model, optimizer, train_data_loader, criterion, device)

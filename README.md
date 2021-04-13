@@ -98,13 +98,23 @@ This repository is part of my master thesis.
 | QR EmbeddingBag | Dynamic       | (400,400,400) | 4.178   | 5.082 | 7.232  | 10.446 | 16.482 | 30.586   | 56.124 *| 119.338 | 16
 | QR EmbeddingBag | Static        | (400,400,400) | 5.516   | 6.318 | 8.128  | 11.036 | 16.990 | 29.040   | 52.546 *| 109.302 | 16
 
+#### Full Runs
+- Epochs: 30
+- Early stopping
+
+| Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) |  Notes |
+|-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|--------|
+| EmbeddingBag    | None          | (0,0,0)       | 0.4474    | 0.8056 | 0.6104    | 21.69 | 11,956,823    |  47.84    | no overfitting     
+| EmbeddingBag    | None          | (400,400,400) | 0.4450    | 0.8082 | 0.6152    | 22.11 | 12,436,824    |  49.780   | early stopped: epoch 14
+
+
 
 ### Twitter Dataset
 
 | Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) | Notes      |
 |-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|------------|
-| Embedding       | None          | (400,400,400) | 0.3173    | 0.9365 |  0.9026   | 53.29 | 62,390,64    |  249.596   | Like, 1 Epoch
-| EmbeddingBag    | None          | (400,400,400) | 0.1018    | 0.8407 |  0.1279   | 14.38 | 62,390,64    |  249.596   | Reply, 1 Epoch
+| Embedding       | None          | (400,400,400) | 0.3173    | 0.9365 |  0.9026   | 53.29 | 62,390,64     |  249.596  | Like, 1 Epoch
+| EmbeddingBag    | None          | (400,400,400) | 0.1018    | 0.8407 |  0.1279   | 14.38 | 62,390,64     |  249.596  | Reply, 1 Epoch
 
 
 ## References
