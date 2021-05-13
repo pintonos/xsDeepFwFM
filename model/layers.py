@@ -22,16 +22,30 @@ class FeaturesLinear(torch.nn.Module):
 
 class FeaturesEmbedding(torch.nn.Module):
 
-    def __init__(self, field_dims, embed_dim):
+    def __init__(self, field_dims, embed_dim, use_emb_bag=False, use_qr_emb=False, qr_collisions=4):
         super().__init__()
-        self.embedding = torch.nn.Embedding(sum(field_dims), embed_dim)
-        torch.nn.init.xavier_uniform_(self.embedding.weight.data)
+        
+        self.use_emb_bag = use_emb_bag
+        self.use_qr_emb = use_qr_emb
+
+        if use_emb_bag or use_qr_emb:
+            self.embeddings = self.create_emb(embed_dim, field_dims, use_qr_emb, qr_collisions=qr_collisions)
+        else:
+            self.embeddings = torch.nn.ModuleList([
+                torch.nn.Embedding(field_dim, embed_dim) for field_dim in field_dims
+            ])
+            for embedding in self.embeddings:
+                torch.nn.init.xavier_uniform_(embedding.weight.data)
 
     def forward(self, x):
         """
         :param x: Long tensor of size ``(batch_size, num_fields)``
         """
-        return self.embedding(x)
+        if self.use_emb_bag or self.use_qr_emb:
+            embed_x = [emb(torch.unsqueeze(x[:, i], 1).contiguous()) for i, emb in enumerate(self.embeddings)]
+        else:
+            embed_x = [emb(x[:, i].contiguous()) for i, emb in enumerate(self.embeddings)]
+        return embed_x
 
 
 class MultiLayerPerceptron(torch.nn.Module):

@@ -7,9 +7,9 @@ from model.layers import FeaturesLinear, FeaturesEmbedding, MultiLayerPerceptron
 
 
 class MultiLayerPerceptronModel(torch.nn.Module):
-    def __init__(self, field_dims, embed_dim, mlp_dims, dropout):
+    def __init__(self, field_dims, embed_dim, mlp_dims, dropout, use_emb_bag=False, use_qr_emb=False, qr_collisions=4):
         super().__init__()
-        self.embedding = FeaturesEmbedding(field_dims, embed_dim)
+        self.embeddings = FeaturesEmbedding(field_dims, embed_dim, use_emb_bag, use_qr_emb, qr_collisions)
         self.embed_output_dim = len(field_dims) * embed_dim
         self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout)
 
@@ -17,9 +17,9 @@ class MultiLayerPerceptronModel(torch.nn.Module):
         """
         :param x: Long tensor of size ``(batch_size, num_fields)``
         """
-        embed_x = self.embedding(x)
+        embed_x_2nd = self.embeddings(x)
 
-        x = self.mlp(embed_x.view(-1, self.embed_output_dim))
+        x = self.mlp(torch.cat(embed_x_2nd, 1))
 
         return torch.sigmoid(x.squeeze(1))
 

@@ -27,29 +27,36 @@ def main(dataset_name,
     dataset = get_dataset(dataset_name, dataset_path, twitter_label)
     train_data_loader, valid_data_loader, test_data_loader = get_dataloaders(dataset, dataset_name, batch_size, random=False)
 
+    criterion = torch.nn.BCELoss()
+
+    epoch = 0
     if model_path:
         model = get_model(model_name, dataset, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions).to(device)
         checkpoint = torch.load(model_path)
         model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        epoch = checkpoint['epoch']
+        loss = checkpoint['loss']
     else:
         model = get_model(model_name, dataset, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions).to(device)
+        optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+
     print(model)
-    criterion = torch.nn.BCELoss()
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-    early_stopper = EarlyStopper(num_trials=2, save_path=get_full_model_path(save_dir, dataset_name, twitter_label, model_name, model, use_emb_bag, use_qr_emb, qr_collisions, epochs))
+    early_stopper = EarlyStopper(num_trials=2, save_path=get_full_model_path(save_dir, dataset_name, twitter_label, model_name, model, use_emb_bag, use_qr_emb, qr_collisions, epochs + epoch))
 
-    for epoch_i in range(epochs):
+    for epoch_i in range(epoch + 1, epoch + epochs + 1):
+        print('epoch:', epoch_i)
         train(model, optimizer, train_data_loader, criterion, device)
         loss, auc, prauc, rce = test(model, valid_data_loader, criterion, device)
-        print('epoch:', epoch_i)
         print(f'valid loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
         if not early_stopper.is_continuable(model, auc, epoch_i, optimizer, loss):
             print(f'validation: best auc: {early_stopper.best_accuracy}')
             break
 
     loss, auc, prauc, rce = test(model, test_data_loader, criterion, device)
-    print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+    print(f'final test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     print_size_of_model(model)
 
 

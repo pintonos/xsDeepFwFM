@@ -122,7 +122,6 @@ def train_kd(student_model, teacher_model, optimizer, criterion, data_loader, de
         loss = loss_fn_kd(output_student, output_teacher, target.float(), alpha, temperature)
 
         optimizer.zero_grad()
-
         loss.backward()
         optimizer.step()
 
@@ -132,7 +131,7 @@ def train_kd(student_model, teacher_model, optimizer, criterion, data_loader, de
             total_loss = 0
 
 
-def loss_fn_kd(outputs, teacher_outputs, y, alpha, temperature):
+def loss_fn_kd(student_outputs, teacher_outputs, y, alpha, temperature):
     """
     Compute the knowledge-distillation (KD) loss given outputs, labels.
     "Hyperparameters": temperature and alpha
@@ -140,10 +139,13 @@ def loss_fn_kd(outputs, teacher_outputs, y, alpha, temperature):
     NOTE: the KL Divergence for PyTorch comparing the softmaxs of teacher
     and student expects the input tensor to be log probabilities! See Issue https://github.com/peterliht/knowledge-distillation-pytorch/issues/2
     """
-    kd_loss = torch.nn.KLDivLoss()(torch.nn.functional.log_softmax(outputs / temperature, dim=0),
-                                torch.nn.functional.softmax(teacher_outputs / temperature, dim=0)) * (alpha * temperature * temperature) + \
-                torch.nn.functional.binary_cross_entropy(outputs, y) * (1. - alpha)
-    return kd_loss
+
+    soft_loss = torch.nn.KLDivLoss()(torch.log_softmax(student_outputs / temperature, dim=0),
+                                    torch.softmax(teacher_outputs / temperature, dim=0))
+
+    hard_loss = torch.nn.functional.binary_cross_entropy(student_outputs, y)
+
+    return (alpha * (temperature ** 2) * soft_loss) + ((1. - alpha) * hard_loss)
 
 
 def test(model, data_loader, criterion, device):

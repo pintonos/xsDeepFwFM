@@ -24,7 +24,7 @@ def plot_kd_val_loss():
     plt.plot(epochs, val_losses_16_small, label="(16,16)", linestyle="dashed", color="red", marker='D')
     plt.xlabel("Epochs")
     plt.xticks(np.arange(1, 6, 1.0))
-    plt.ylabel("Validation Loss")
+    plt.ylabel("Validation LogLoss")
     plt.legend()
     plt.savefig('figures/kd_val_loss.png', dpi=300)
     plt.show()

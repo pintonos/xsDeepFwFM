@@ -37,17 +37,29 @@ This repository is part of my master thesis.
 | EmbeddingBag    | QAT           | (400,400,400) | 0.4459    | 0.8073 | 0.6135    | 21.94 | NaN           |  24.46    | 5 Epochs
 | EmbeddingBag    | None          | (128,128,128) | 0.4502    | 0.8025 | 0.6060    | 21.20 | 12,040,792    |  48.189   | KD  
 | EmbeddingBag    | None          | (128,128,128) | 0.4460    | 0.8071 | 0.6134    | 21.93 | 12,040,792    |  48.189   | without KD 
-| EmbeddingBag    | None          | (128,128,128) | 0.4482    | 0.8046 | ----------------------------------------------| KD, alpha 0.9, 1 epoch
-| EmbeddingBag    | None          | (128,128,128) | 0.4483    | 0.8046 | ----------------------------------------------| KD, alpha 0.5, 1 epoch
-| EmbeddingBag    | None          | (128,128,128) | 0.4483    | 0.8046 | ----------------------------------------------| KD, alpha 0.1, 1 epoch *
-| EmbeddingBag    | None          | (128,128,128) | 0.4483    | 0.8046 | ----------------------------------------------| without KD, 1 epoch
 | EmbeddingBag    | None          | (64,64,64)    | 0.4502    | 0.8024 | 0.6058    | 21.20 | 11,990,616    |  47.987   | KD, similar to 128?
 | EmbeddingBag    | None          | (64,64,64)    | 0.4463    | 0.8068 | 0.6125    | 21.88 | 11,990,616    |  47.987   | without KD 
 | EmbeddingBag    | None          | (32,32,32)    | 0.4504    | 0.8022 | 0.6055    | 21.16 | 11,971,672    |  47.911   | KD
 | EmbeddingBag    | None          | (32,32,32)    | 0.4471    | 0.8060 | 0.6111    | 21.75 | 11,971,672    |  47.911   | without KD 
 | EmbeddingBag    | None          | (16,16)       | 0.4507    | 0.8019 | 0.6048    | 21.11 | 11,963,432    |  47.875   | KD 
 | EmbeddingBag    | None          | (16,16)       | 0.4474    | 0.8057 | 0.6107    | 21.70 | 11,963,432    |  47.875   | without KD 
+| EmbeddingBag    | None          | (64,64,64)    | 0.5319    | 0.8032 | 0.6066    |  6.90 | 11,990,616    |  47.987   | KD, new technique
+| EmbeddingBag    | None          | (64,64,64)    | 0.5197    | 0.8056 | 0.6106    |  9.04 | 11,990,616    |  47.987   | KD, new technique 5 ep
 
+#### Knowledge Distillation - TEST
+
+- DNN only
+- 1 Epoch
+- TODO 2 Epochs
+
+| # Deep Nodes  | LogLoss   | AUC    |  Notes |
+|---------------|-----------|--------|--------|
+| (128,128,128) | 0.4506    | 0.8021 | without KD 
+| (128,128,128) | 0.4489    | 0.8042 | without KD, 2 epochs
+| (128,128,128) | 0.4540    | 0.8016 | KD a = 0.5 
+| (128,128,128) | 0.4499    | 0.8039 | KD a = 0.3, 2 epochs, new
+| (128,128,128) | 0.4479    | 0.8056 | KD a = 0.3, 5 epochs, old
+| (128,128,128) | 0.4520    | 0.8008 | KD a = 0.9, 2 epochs, old
 
 #### Embeddings
 | Embedding       |  # Deep Nodes | 1 (CPU) | 8     | 16     | 32     | 64     | 128    | 256     | 512     | 1024    | 512 (GPU) | 1024    | 2048    | 4096    | Notes |
@@ -113,8 +125,11 @@ This repository is part of my master thesis.
 
 | Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) | Notes      |
 |-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|------------|
-| Embedding       | None          | (400,400,400) | 0.3173    | 0.9365 |  0.9026   | 53.29 | 62,390,64     |  249.596  | Like, 1 Epoch
-| EmbeddingBag    | None          | (400,400,400) | 0.1018    | 0.8407 |  0.1279   | 14.38 | 62,390,64     |  249.596  | Reply, 1 Epoch
+| Embedding       | None          | (400,400,400) | 0.3173    | 0.9365 |  0.9026   | 53.29 | 62,390,100    |  249.596  | Like, 1 Epoch...then OF
+| EmbeddingBag    | None          | (400,400,400) | 0.1018    | 0.8407 |  0.1279   | 14.38 | 62,390,100    |  249.596  | Reply, 1 Epoch
+| EmbeddingBag    | None          | (400,400,400) | 0.2275    | 0.8641 |  0.4777   | 29.12 | 62,390,100    |  249.596  | Retweet, 1 Epoch
+| EmbeddingBag    | None          | (400,400,400) | 0.0385    | 0.8053 |  0.0280   |  5.18 | 62,390,100    |  249.596  | Retweet with comment, 1 Epoch
+| EmbeddingBag    | None          | (400,400,400) | 0.0372    | 0.8069 |  0.0293   |  8.49 | 62,390,100    |  249.596  | Retweet with comment, 6 Epochs, then OF
 
 
 ## References
