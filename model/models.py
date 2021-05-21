@@ -7,11 +7,11 @@ from model.layers import FeaturesLinear, FeaturesEmbedding, MultiLayerPerceptron
 
 
 class MultiLayerPerceptronModel(torch.nn.Module):
-    def __init__(self, field_dims, embed_dim, mlp_dims, dropout, use_emb_bag=False, use_qr_emb=False, qr_collisions=4):
+    def __init__(self, field_dims, embed_dim, mlp_dims, dropout, use_emb_bag=False, use_qr_emb=False, qr_collisions=4, batch_norm=True):
         super().__init__()
         self.embeddings = FeaturesEmbedding(field_dims, embed_dim, use_emb_bag, use_qr_emb, qr_collisions)
         self.embed_output_dim = len(field_dims) * embed_dim
-        self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout)
+        self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout, batch_norm=batch_norm)
 
     def forward(self, x):
         """

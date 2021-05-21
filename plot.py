@@ -91,7 +91,7 @@ def plot_latency_vs_auc_qr():
 
 
 def plot_latency_vs_auc():
-    latency = [6.388, 44.724, 31.444, 25.028, 8.524, 11.139, 14.047]
+    latency = [41.17, 331.48, 217.24, 178.26, 54.62, 48.10, 61.67]  # 512
     auc = [0.8050, 0.8077, 0.8062, 0.8039, 0.8076, 0.8076, 0.8073]
 
     fig, ax1 = plt.subplots(figsize=(10, 5))
@@ -155,8 +155,8 @@ def plot_profile():
     plt.show()
 
 
-plot_kd_val_loss()
+#plot_kd_val_loss()
 #plot_latency_vs_auc_quantization()
 #plot_latency_vs_auc_qr()
-#plot_latency_vs_auc()
+plot_latency_vs_auc()
 #plot_profile()
