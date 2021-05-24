@@ -37,13 +37,12 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         self.num_fields = len(field_dims)
         self.use_lw = use_lw
         self.use_fwlw = use_fwlw
-        self.use_emb_bag = use_emb_bag
-        self.use_qr_emb = use_qr_emb
         self.mlp_dims = mlp_dims
         self.linear = FeaturesLinear(field_dims)
-        self.fwfm_linear = torch.nn.Linear(embed_dim, self.num_fields, bias=False)
-        self.fwfm = FieldWeightedFactorizationMachine(field_dims, embed_dim, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions)
+        self.embeddings = FeaturesEmbedding(field_dims, embed_dim, use_emb_bag, use_qr_emb, qr_collisions)
         self.embed_output_dim = len(field_dims) * embed_dim
+        self.fwfm_linear = torch.nn.Linear(embed_dim, self.num_fields, bias=False)
+        self.fwfm = FieldWeightedFactorizationMachine(field_dims)
         self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout, quantize=quantize_dnn, batch_norm=batch_norm)
         self.bias = torch.nn.Parameter(torch.Tensor([0.01]))
 
@@ -51,10 +50,7 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         """
         :param x: Long tensor of size ``(batch_size, num_fields)``
         """
-        if self.use_emb_bag or self.use_qr_emb:
-            embed_x_2nd = [emb(torch.unsqueeze(x[:, i], 1).contiguous()) for i, emb in enumerate(self.fwfm.embeddings)]
-        else:
-            embed_x_2nd = [emb(x[:, i].contiguous()) for i, emb in enumerate(self.fwfm.embeddings)]
+        embed_x_2nd = self.embeddings(x)
 
         fwfm_second_order = torch.sum(self.fwfm(torch.stack(embed_x_2nd)), dim=1, keepdim=True)
 
@@ -78,7 +74,7 @@ class FieldWeightedFactorizationMachineModel(torch.nn.Module):
         Pan et al., Field-weighted factorization machines for click-through rate prediction in display advertising, 2018.
     """
 
-    def __init__(self, field_dims, embed_dim, use_lw=False, use_fwlw=False, use_emb_bag=False, use_qr_emb=False):
+    def __init__(self, field_dims, embed_dim, use_lw=False, use_fwlw=False, use_emb_bag=False, use_qr_emb=False, qr_collisions=4):
         super().__init__()
         self.num_fields = len(field_dims)
         self.use_lw = use_lw
@@ -86,18 +82,16 @@ class FieldWeightedFactorizationMachineModel(torch.nn.Module):
         self.use_emb_bag = use_emb_bag
         self.use_qr_emb = use_qr_emb
         self.linear = FeaturesLinear(field_dims)
+        self.embeddings = FeaturesEmbedding(field_dims, embed_dim, use_emb_bag, use_qr_emb, qr_collisions)
         self.fwfm_linear = torch.nn.Linear(embed_dim, self.num_fields, bias=False)
-        self.fwfm = FieldWeightedFactorizationMachine(field_dims, embed_dim, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
+        self.fwfm = FieldWeightedFactorizationMachine(field_dims)
         self.bias = torch.nn.Parameter(torch.Tensor([0.01]))
 
     def forward(self, x):
         """
         :param x: Long tensor of size ``(batch_size, num_fields)``
         """
-        if self.use_emb_bag or self.use_qr_emb:
-            embed_x_2nd = [emb(torch.unsqueeze(x[:, i], 1)) for i, emb in enumerate(self.fwfm.embeddings)]
-        else:
-            embed_x_2nd = [emb(x[:, i]) for i, emb in enumerate(self.fwfm.embeddings)]
+        embed_x_2nd = self.embeddings(x)
 
         fwfm_second_order = torch.sum(self.fwfm(torch.stack(embed_x_2nd)), dim=1, keepdim=True)
 
