@@ -81,9 +81,9 @@ def get_model(name, dataset, mlp_dims=(400, 400, 400), batch_norm=True, use_emb_
     if name == 'fwfm' or mlp_dims == (0,0,0):
         return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
     elif name == 'dfwfm':
-        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions, mlp_dims=mlp_dims, dropout=0.2, batch_norm=batch_norm)
+        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions, mlp_dims=mlp_dims, dropout=0.5, batch_norm=batch_norm)
     elif name == 'mlp':
-        return MultiLayerPerceptronModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims, dropout=0.2, batch_norm=batch_norm)
+        return MultiLayerPerceptronModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims, dropout=0.5, batch_norm=batch_norm)
     else:
         raise ValueError('unknown model name: ' + name)
 

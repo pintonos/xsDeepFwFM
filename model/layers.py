@@ -50,7 +50,7 @@ class FeaturesEmbedding(torch.nn.Module):
                 torch.nn.init.xavier_uniform_(EE.weight.data)
             emb_l.append(EE)
         return emb_l
-        
+
     def forward(self, x):
         """
         :param x: Long tensor of size ``(batch_size, num_fields)``
@@ -64,7 +64,7 @@ class FeaturesEmbedding(torch.nn.Module):
 
 class MultiLayerPerceptron(torch.nn.Module):
 
-    def __init__(self, input_dim, embed_dims, dropout, output_layer=True, quantize=False, batch_norm=True):
+    def __init__(self, input_dim, embed_dims, dropout=0.5, output_layer=True, quantize=False, batch_norm=True):
         super().__init__()
         layers = list()
         for embed_dim in embed_dims:
