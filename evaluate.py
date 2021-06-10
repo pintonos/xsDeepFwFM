@@ -15,10 +15,11 @@ def main(dataset_name,
          use_qr_emb,
          qr_collisions,
          device,
-         profile):
+         profile,
+         twitter_label):
 
     device = torch.device(device)
-    dataset = get_dataset(dataset_name, dataset_path)
+    dataset = get_dataset(dataset_name, dataset_path, twitter_label)
     _, _, test_dataset = get_datasets(dataset, dataset_name)
     test_data_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, num_workers=0)
 
@@ -65,6 +66,7 @@ if __name__ == '__main__':
     parser.add_argument('--qr_collisions', type=int, default=4)
     parser.add_argument('--device', default='cuda:0')
     parser.add_argument('--profile', type=int, default=1)
+    parser.add_argument('--twitter_label', default='like')
     args = parser.parse_args()
     main(args.dataset_name,
          args.dataset_path,
@@ -76,4 +78,5 @@ if __name__ == '__main__':
          args.use_qr_emb,
          args.qr_collisions,
          args.device,
-         args.profile)
+         args.profile,
+         args.twitter_label)

@@ -76,20 +76,20 @@ def get_dataloaders(dataset, dataset_name, batch_size, random=False):
     return train_data_loader, valid_data_loader, test_data_loader
 
 
-def get_model(name, dataset, mlp_dims=(400, 400, 400), batch_norm=True, use_emb_bag=True, use_qr_emb=False, qr_collisions=4):
+def get_model(name, dataset, mlp_dims=(400, 400, 400), dropout=0.0, batch_norm=True, use_emb_bag=True, use_qr_emb=False, qr_collisions=4):
     field_dims = dataset.field_dims
     if name == 'fwfm' or mlp_dims == (0,0,0):
         return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
     elif name == 'dfwfm':
-        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions, mlp_dims=mlp_dims, dropout=0.5, batch_norm=batch_norm)
+        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions, mlp_dims=mlp_dims, dropout=dropout, batch_norm=batch_norm)
     elif name == 'mlp':
-        return MultiLayerPerceptronModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims, dropout=0.5, batch_norm=batch_norm)
+        return MultiLayerPerceptronModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims, dropout=dropout, batch_norm=batch_norm)
     else:
         raise ValueError('unknown model name: ' + name)
 
 
 def get_full_model_path(save_dir, dataset_name, twitter_label, model_name, model, use_emb_bag, use_qr_emb, qr_collisions, epochs):
-    return f"{save_dir}/{dataset_name if dataset_name != 'twitter' else dataset_name + '_' + twitter_label}_{model_name}{model.mlp_dims if hasattr(model, 'mlp_dims') else ''}{'_emb_bag' if use_emb_bag and not use_qr_emb else ''}{'_qr_emb_' + str(qr_collisions) if use_qr_emb else ''}_epochs_{epochs}.pt"
+    return f"{save_dir}/{dataset_name if dataset_name != 'twitter' else dataset_name + '_' + twitter_label}_{model_name}{model.mlp_dims if hasattr(model, 'mlp_dims') else ''}{'_embbag' if use_emb_bag and not use_qr_emb else ''}{'_qr' + str(qr_collisions) if use_qr_emb else ''}_{epochs}.pt"
 
 
 def train(model, optimizer, data_loader, criterion, device, log_interval=100):

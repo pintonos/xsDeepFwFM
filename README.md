@@ -11,7 +11,14 @@ Original paper (DeepFwFM):
 }
 ```
 
-In this repository additional model compression and acceleration will be conducted. Evaluation on the Criteo dataset and the Twitter dataset given by the RecSys 2020 Challenge.
+In this repository additional model compression and acceleration will be conducted. 
+
+Used techniques:
+- QR Embeddings
+- Quantization
+- Knowledge Distillation
+
+Evaluation on the Criteo dataset and the Twitter dataset given by the RecSys 2020 Challenge.
 
 This repository is part of my master thesis.
 
@@ -20,63 +27,19 @@ This repository is part of my master thesis.
 
 ### Criteo Dataset
 - Split: first 6 days for training & last day for 50% validation and 50% test
-- Epochs: 30 with early stopping
+- Epochs: 50 with early stopping
 - Batch Size (Training): 2048
 - Intel Xeon E3-1231v3 & NVIDIA GTX 970
 
-TODO rerun with new dropout?
-
 | Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) |  Notes |
 |-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|--------|
-| EmbeddingBag    | None          | (0,0,0)       | 0.4474    | 0.8056 | 0.6104    | 21.69 | 11,956,823    |  47.84    | no overfitting, TODO?
-| EmbeddingBag    | None          | (400,400,400) | 0.4450    | 0.8082 | 0.6152    | 22.11 | 12,436,824    |  49.780   | early stopped: epoch 14
-| QR EmbeddingBag | None          | (400,400,400) | 0.4459    | 0.8072 | 0.6137    | 21.96 |  4,294,354    |  17.216   | 4 collisions TODO
-| QR EmbeddingBag | None          | (400,400,400) | 0.4459    | 0.8072 | 0.6137    | 21.96 |  4,294,354    |  17.216   | 60 collisions
-| EmbeddingBag    | Dynamic       | (400,400,400) | 0.4455    | 0.8076 | 0.6143    | 22.02 | 11,959,223    |  48.35    | TODO
-| EmbeddingBag    | Static        | (400,400,400) | 0.4456    | 0.8076 | 0.6142    | 22.01 | NaN           |  24.46    | TODO
-| EmbeddingBag    | QAT           | (400,400,400) | 0.4459    | 0.8073 | 0.6135    | 21.94 | NaN           |  24.46    | TODO       
-
-
-#### Knowledge Distillation - TEST
-
-- DNN only
-- 1 Epoch
-- valid scores
-
-| # Deep Nodes  | LogLoss   | AUC    |  Notes |
-|---------------|-----------|--------|--------|
-| (200,200,200) | 0.4491    | 0.8047 | without KD valid
-| (200,200,200) | 0.4499    | 0.8029 | without KD test
-| (200,200,200) | 0.4492    | 0.8046 | a = 0.1, t=7
-| (200,200,200) | 0.4492    | 0.8046 | a = 0.2, t=7
-| (200,200,200) | 0.4493    | 0.8046 | a = 0.1, t=9
-| (200,200,200) | 0.4492    | 0.8047 | a = 0.2, t=9
-| (200,200,200) | 0.4492    | 0.8046 | a = 0.1, t=10
-| (200,200,200) | 0.4492    | 0.8046 | a = 0.2, t=10
-| (200,200,200) | 0.4492    | 0.8046 | a = 0.1, t=12
-| (200,200,200) | 0.4493    | 0.8046 | a = 0.2, t=12
-| (200,200,200) | 0.4491    | 0.8047 | a = 0.2, t=5
-| (200,200,200) | 0.4497    | 0.8041 | a = 0.4, t=5
-| (200,200,200) | 0.4492    | 0.8045 | a = 0.2, t=3
-| (200,200,200) | 0.4495    | 0.8043 | a = 0.4, t=3
-| (200,200,200) | 0.4491    | 0.8047 | a = 0.2, t=2
-| (200,200,200) | 0.4495    | 0.8043 | a = 0.4, t=2
-| (200,200,200) | 0.4500    | 0.8019 | a = 0.6, t=2
-| (200,200,200) | 0.4493    | 0.8045 | a = 0.2, t=4
-| (200,200,200) | 0.4496    | 0.8042 | a = 0.4, t=4
-| (200,200,200) | 0.4499    | 0.8020 | a = 0.6, t=4
-| (200,200,200) | 0.4492    | 0.8046 | a = 0.2, t=7
-| (200,200,200) | 0.4496    | 0.8041 | a = 0.4, t=7
-| (200,200,200) | 0.4489    | 0.8049 | a = 0.05, t=2
-| (200,200,200) | 0.4491    | 0.8047 | a = 0.1, t=2
-| (200,200,200) | 0.4492    | 0.8046 | a = 0.15, t=2
-| (200,200,200) | 0.4492    | 0.8046 | a = 0.01, t=2
-| (200,200,200) | 0.4490    | 0.8048 | a = 0.02, t=2
-| (200,200,200) | 0.4493    | 0.8045 | a = 0.04, t=2
-| (200,200,200) | 0.4492    | 0.8047 | a = 0.07, t=2
-| (200,200,200) | 0.4538    | 0.7994 | a = 0.95, t=2
-
-TODO: 0.1 full run
+| EmbeddingBag    | None          | (0,0,0)       | 0.4473    | 0.8058 | 0.6106    | 21.71 | 11,956,823    |  47.84    |
+| EmbeddingBag    | None          | (400,400,400) | 0.4447    | 0.8085 | 0.6158    | 22.16 | 12,436,824    |  49.780   | 0.0 dropout, 1e-6
+| QR EmbeddingBag | None          | (400,400,400) | 0.4458    | 0.8072 | 0.6140    | 21.97 |  4,294,354    |  17.217   | 4 collisions, 0.0 dropout, 1e-6
+| QR EmbeddingBag | None          | (400,400,400) | 0.4517    | 0.8008 | 0.6033    | 20.94 |  1,771,504    |   7.125   | 60 collisions TODO
+| EmbeddingBag    | Dynamic       | (400,400,400) | 0.4455    | 0.8076 | 0.6143    | 22.02 | 12,436,824    |  48.35    | TODO
+| EmbeddingBag    | Static        | (400,400,400) | 0.4456    | 0.8076 | 0.6142    | 22.01 | 12,436,824    |  24.46    | TODO
+| EmbeddingBag    | QAT           | (400,400,400) | 0.4459    | 0.8073 | 0.6135    | 21.94 | 12,436,824    |  24.46    | TODO       
 
 
 #### Embeddings - Latency
@@ -101,12 +64,7 @@ TODO: 0.1 full run
 | EmbeddingBag    | (400,400,400) | 2.570   | 9.134 | 13.120 | 23.550 | 44.724 | 86.406 | 167.728 | 331.486*| 680.618 | 8.951     | 11.251  | 17.433  | 66.624  | * is fastest
 | EmbeddingBag    | (128,128,128) | 2.570   | 9.134 | 13.120 | 23.550 | 44.724 | 86.406 | 167.728 | 331.486*| 680.618 | 8.951     | 11.251  | 17.433  | 66.624  | 
 | EmbeddingBag    | (128,128,128) | 2.570   | 9.134 | 13.120 | 23.550 | 44.724 | 86.406 | 167.728 | 331.486*| 680.618 | 8.951     | 11.251  | 17.433  | 66.624  | 
-| EmbeddingBag    | (64,64,64)    | 2.570   | 9.134 | 13.120 | 23.550 | 44.724 | 86.406 | 167.728 | 331.486*| 680.618 | 8.951     | 11.251  | 17.433  | 66.624  |
-| EmbeddingBag    | (64,64,64)    | 2.570   | 9.134 | 13.120 | 23.550 | 44.724 | 86.406 | 167.728 | 331.486*| 680.618 | 8.951     | 11.251  | 17.433  | 66.624  |
-| EmbeddingBag    | (32,32,32)    | 2.570   | 9.134 | 13.120 | 23.550 | 44.724 | 86.406 | 167.728 | 331.486*| 680.618 | 8.951     | 11.251  | 17.433  | 66.624  |
-| EmbeddingBag    | (32,32,32)    | 2.570   | 9.134 | 13.120 | 23.550 | 44.724 | 86.406 | 167.728 | 331.486*| 680.618 | 8.951     | 11.251  | 17.433  | 66.624  |
-| EmbeddingBag    | (16,16,16)    | 2.570   | 9.134 | 13.120 | 23.550 | 44.724 | 86.406 | 167.728 | 331.486*| 680.618 | 8.951     | 11.251  | 17.433  | 66.624  |
-| EmbeddingBag    | (16,16,16)    | 2.570   | 9.134 | 13.120 | 23.550 | 44.724 | 86.406 | 167.728 | 331.486*| 680.618 | 8.951     | 11.251  | 17.433  | 66.624  |
+
  
 #### Ensembles
 | Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) |  Notes |
@@ -147,12 +105,14 @@ TODO: 0.1 full run
 | EmbeddingBag    | None          | (400,400,400) | 0.0360    | 0.8120 |  0.0402   | 11.45 | 348,767,961   | 1395.106  | Retweet with comment, 3 Epochs no OF
 
 ### K80, 15 threshold
+- Epochs: 10 with early stopping
 
 | Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) | Notes      |
 |-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|------------|
-| EmbeddingBag    | None          | (400,400,400) | 0.3220    | 0.9388 |  0.9086   | 52.59 | 131,937,765   |  527.786  | Like, 2 Epoch
-
-
+| EmbeddingBag    | None          | (400,400,400) | 0.3220    | 0.9388 |  0.9086   | 52.59 | 131,937,765   |  527.786  | Like, 2 Epoch, 0.2 dropout
+| EmbeddingBag    | None          | (400,400,400) | 0.3324    | 0.9388 |  0.9083   | 51.06 | 131,937,765   |  527.786  | Like, 3 Epochs, 0.5 dropout TODO more training
+| EmbeddingBag    | None          | (400,400,400) | 0.2155    | 0.8814 |  0.5378   | 32.81 | 131,937,765   |  527.786  | Retweet, early stopped: 8
+| EmbeddingBag    | None          | (400,400,400) | 0.2155    | 0.8814 |  0.5378   | 32.81 | 131,937,765   |  527.786  | Retweet with comment, epoch +4 looking good 
 
 
 ## References

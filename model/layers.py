@@ -64,15 +64,18 @@ class FeaturesEmbedding(torch.nn.Module):
 
 class MultiLayerPerceptron(torch.nn.Module):
 
-    def __init__(self, input_dim, embed_dims, dropout=0.5, output_layer=True, quantize=False, batch_norm=True):
+    def __init__(self, input_dim, embed_dims, dropout=0.0, output_layer=True, quantize=False, batch_norm=True):
         super().__init__()
         layers = list()
+        if not dropout == 0.0:
+            layers.append(torch.nn.Dropout(p=dropout))
         for embed_dim in embed_dims:
             layers.append(torch.nn.Linear(input_dim, embed_dim))
             if batch_norm:
-                layers.append(torch.nn.BatchNorm1d(embed_dim))
+                layers.append(torch.nn.BatchNorm1d(embed_dim))#, momentum=0.005))
             layers.append(torch.nn.ReLU())
-            layers.append(torch.nn.Dropout(p=dropout))
+            if not dropout == 0.0:
+                layers.append(torch.nn.Dropout(p=dropout))
             input_dim = embed_dim
         if output_layer:
             layers.append(torch.nn.Linear(input_dim, 1))
