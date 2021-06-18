@@ -3,27 +3,19 @@ import numpy as np
 
 
 def plot_kd_val_loss():
-    epochs = np.arange(1, 6)
-    val_losses_128_student = [0.451030, 0.449960, 0.449685, 0.449376, 0.449314]
-    val_losses_128_small = [0.447326, 0.445907, 0.445444, 0.445095, 0.444981]
-    val_losses_64_student = [0.451616,0.450325, 0.449866, 0.449531, 0.449425]
-    val_losses_64_small = [0.447748, 0.446368, 0.445790, 0.445482, 0.445273]
-    val_losses_32_student = [0.451784, 0.450430, 0.450050, 0.449770, 0.449682]
-    val_losses_32_small = [0.447997, 0.446669, 0.446322, 0.446094, 0.445911]
-    val_losses_16_student = [0.452229, 0.451208, 0.450208, 0.450020, 0.449928]
-    val_losses_16_small = [0.448191, 0.447019, 0.446597, 0.446390, 0.446236]
+    epochs = np.arange(1, 50)
+    val_losses_200_student = [] # TODO
+    val_losses_200_small = [] # TODO
+    val_losses_100_student = [] # TODO
+    val_losses_100_small = [0.448422, 0.446495, 0.445742, 0.445319, 0.445052, 0.444879, 0.444743, 0.444638, 0.444595, 0.444482, 0.444461, 0.444438, 0.444387, 0.444376, 0.444338, 0.444296, 0.444263, 0.444256, 0.444247, 0.444249, 0.444247, 0.444244, 0.444244, 0.444268, 0.444233, 0.444266, 0.444213, 0.444234, 0.444230, 0.444246, 0.444190, 0.444172, 0.444201, 0.444166, 0.444208, 0.444131, 0.444099, 0.444113, 0.444167, 0.444097, 0.444105, 0.444145]
 
     plt.figure(figsize=(10, 5))
-    plt.plot(epochs, val_losses_128_student, label="(128,128,128) + KD", color="orange", marker='D')
-    plt.plot(epochs, val_losses_128_small, label="(128,128,128)", linestyle="dashed", color="orange", marker='D')
-    plt.plot(epochs, val_losses_64_student, label="(64,64,64) + KD", color="yellow", marker='D')
-    plt.plot(epochs, val_losses_64_small, label="(64,64,64)", linestyle="dashed", color="yellow", marker='D')
-    plt.plot(epochs, val_losses_32_student, label="(32,32,32) + KD", color="blue", marker='D')
-    plt.plot(epochs, val_losses_32_small, label="(32,32,32)", linestyle="dashed", color="blue", marker='D')
-    plt.plot(epochs, val_losses_16_student, label="(16,16) + KD", color="red", marker='D')
-    plt.plot(epochs, val_losses_16_small, label="(16,16)", linestyle="dashed", color="red", marker='D')
+    plt.plot(epochs, val_losses_200_student, label="(200,200,200) + KD", color="orange", marker='D')
+    plt.plot(epochs, val_losses_200_small, label="(200,200,200)", linestyle="dashed", color="orange", marker='D')
+    plt.plot(epochs, val_losses_100_student, label="(100,100,100) + KD", color="blue", marker='D')
+    plt.plot(epochs, val_losses_100_small, label="(100,100,100)", linestyle="dashed", color="blue", marker='D')
     plt.xlabel("Epochs")
-    plt.xticks(np.arange(1, 6, 1.0))
+    plt.xticks(np.arange(1, 50, 1.0))
     plt.ylabel("Validation LogLoss")
     plt.legend()
     plt.savefig('figures/kd_val_loss.png', dpi=300)
@@ -155,8 +147,8 @@ def plot_profile():
     plt.show()
 
 
-#plot_kd_val_loss()
+plot_kd_val_loss()
 #plot_latency_vs_auc_quantization()
 #plot_latency_vs_auc_qr()
-plot_latency_vs_auc()
+#plot_latency_vs_auc()
 #plot_profile()

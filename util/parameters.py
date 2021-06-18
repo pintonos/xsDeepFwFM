@@ -8,6 +8,8 @@ def get_parser():
     parser.add_argument('--dataset_path', help='criteo/train.txt', default='./data/criteo/train.txt')
     parser.add_argument('--model_name', help='fwfm or dfwfm', default='dfwfm')
     parser.add_argument('--model_path', help='path to checkpoint of model')
+    parser.add_argument('--teacher_model_path', help='path to checkpoint of teacher model')
+    parser.add_argument('--mlp_dim', help='neurons per layer', type=int, default=400)
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--learning_rate', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=2048)
@@ -20,5 +22,8 @@ def get_parser():
     parser.add_argument('--twitter_label', default='like')
     parser.add_argument('--dropout', type=float, default=0.0)
     parser.add_argument('--use_bn', help='use batch norm', type=int, default=1)
+    parser.add_argument('--profile_inference', type=int, default=0)
+    parser.add_argument('--alpha', type=float, default=0.05)
+    parser.add_argument('--temperature', type=int, default=3)
 
     return parser

@@ -78,6 +78,8 @@ def get_dataloaders(dataset, dataset_name, batch_size, random=False):
 
 def get_model(name, dataset, mlp_dims=(400, 400, 400), dropout=0.0, batch_norm=True, use_emb_bag=True, use_qr_emb=False, qr_collisions=4):
     field_dims = dataset.field_dims
+    if type(mlp_dims) is int:
+        mlp_dims = (mlp_dims, mlp_dims, mlp_dims)
     if name == 'fwfm' or mlp_dims == (0,0,0):
         return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
     elif name == 'dfwfm':
@@ -88,8 +90,8 @@ def get_model(name, dataset, mlp_dims=(400, 400, 400), dropout=0.0, batch_norm=T
         raise ValueError('unknown model name: ' + name)
 
 
-def get_full_model_path(save_dir, dataset_name, twitter_label, model_name, model, use_emb_bag, use_qr_emb, qr_collisions, epochs):
-    return f"{save_dir}/{dataset_name if dataset_name != 'twitter' else dataset_name + '_' + twitter_label}_{model_name}{model.mlp_dims if hasattr(model, 'mlp_dims') else ''}{'_embbag' if use_emb_bag and not use_qr_emb else ''}{'_qr' + str(qr_collisions) if use_qr_emb else ''}_{epochs}.pt"
+def get_full_model_path(save_dir, dataset_name, twitter_label, model_name, model, epochs):
+    return f"{save_dir}/{dataset_name if dataset_name != 'twitter' else dataset_name + '_' + twitter_label}_{model_name}{model.mlp_dims if hasattr(model, 'mlp_dims') else ''}{'_embbag' if model.use_emb_bag and not model.use_qr_emb else ''}{'_qr' + str(model.qr_collisions) if model.use_qr_emb else ''}_{epochs}.pt"
 
 
 def train(model, optimizer, data_loader, criterion, device, log_interval=100):
@@ -235,18 +237,23 @@ def inference_time_gpu(model, data_loader, profile=False):
     print('\tAvg time per item (GPU)(ms):\t{:.5f}'.format(np.mean(time_spent) / data_loader.batch_size))
 
 
-def print_size_of_model(model):
+def print_size_of_model(model, logger=None):
     print('========')
     print('MODEL SIZE')
     torch.save(model.state_dict(), "temp.p")
     size = os.path.getsize("temp.p")
-    print('\tSize (MB):\t' + str(size / 1e6))
     os.remove('temp.p')
 
     num_total = 0
-    for name, param in model.named_parameters():
+    for _, param in model.named_parameters():
         num_total += np.prod(param.data.shape)
-    print(f"\tNumber of Parameters: \t{num_total:,}")
+
+    if logger:
+        logger.info('\tSize (MB):\t' + str(size / 1e6))
+        logger.info(f"\tNumber of Parameters: \t{num_total:,}")
+    else:
+        print('\tSize (MB):\t' + str(size / 1e6))
+        print(f"\tNumber of Parameters: \t{num_total:,}")
 
 
 def save_model(model, save_path, epoch=1, optimizer=None, loss=None):
@@ -260,43 +267,60 @@ def save_model(model, save_path, epoch=1, optimizer=None, loss=None):
     }, save_path)
 
 
-def static_quantization(model, dataloader, criterion):
+def static_quantization(model, dataloader, criterion, dropout_layer=False):
     device = torch.device('cpu')
     model.eval()
     model.to(device)
     model.mlp.quantize = True
     model.mlp.qconfig = torch.quantization.get_default_qconfig('fbgemm')
-    model.fwfm.embeddings.qconfig = torch.quantization.float_qparams_weight_only_qconfig
+    model.embeddings.qconfig = torch.quantization.float_qparams_weight_only_qconfig
+
+    layer_offset = 4 if dropout_layer else 3
+    layer_start = 1 if dropout_layer else 0
 
     #  fuse linear and batchnorm1d
     model_fused = torch.quantization.fuse_modules(model,
-                                                          [['mlp.mlp.0', 'mlp.mlp.1'],
-                                                           ['mlp.mlp.4', 'mlp.mlp.5'],
-                                                           ['mlp.mlp.8', 'mlp.mlp.9']])
+                                                          [['mlp.mlp.' + str(layer_start),
+                                                            'mlp.mlp.' + str(layer_start + 1)],
+                                                           ['mlp.mlp.' + str(layer_offset),
+                                                            'mlp.mlp.' + str((layer_offset + 1))],
+                                                           ['mlp.mlp.' + str(layer_offset * 2),
+                                                            'mlp.mlp.' + str((layer_offset * 2 + 1))]])
+
     #  fuse linear and relu
     model_fused = torch.quantization.fuse_modules(model_fused,
-                                                          [['mlp.mlp.0', 'mlp.mlp.2'],
-                                                           ['mlp.mlp.4', 'mlp.mlp.6'],
-                                                           ['mlp.mlp.8', 'mlp.mlp.10']])
-
+                                                          [['mlp.mlp.' + str(layer_start),
+                                                            'mlp.mlp.' + str(layer_start + 2)],
+                                                           ['mlp.mlp.' + str(layer_offset),
+                                                            'mlp.mlp.' + str((layer_offset + 2))],
+                                                           ['mlp.mlp.' + str(layer_offset * 2),
+                                                            'mlp.mlp.' + str((layer_offset * 2 + 2))]])
     model_prepared = torch.quantization.prepare(model_fused)
     _, _, _, _ = test(model_prepared, dataloader, criterion, device)  # calibrate
 
     model_static_quantized = torch.quantization.convert(model_prepared)
     return model_static_quantized
 
-def quantization_aware_training(model, train_data_loader, valid_data_loader, early_stopper, device, epochs=5):
+def quantization_aware_training(model, train_data_loader, valid_data_loader, early_stopper, device, epochs=50, dropout_layer=True, bach_norm_layer=False):
     model.train()
     model.mlp.quantize = True
     model.mlp.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
-    model.fwfm.embeddings.qconfig = torch.quantization.float_qparams_weight_only_qconfig
+    model.embeddings.qconfig = torch.quantization.float_qparams_weight_only_qconfig
+
+    layer_offset = 2
+    layer_offset += 1 if dropout_layer else 0
+    layer_offset += 1 if bach_norm_layer else 0
+    layer_start = 1 if dropout_layer else 0
 
     #  fusing linear and batchnorm1d in training not supported yet
     #  fuse linear and relu
     model_fused = torch.quantization.fuse_modules(model,
-                                                [['mlp.mlp.0', 'mlp.mlp.1'],
-                                                ['mlp.mlp.3', 'mlp.mlp.4'],
-                                                ['mlp.mlp.6', 'mlp.mlp.7']])
+                                                [['mlp.mlp.' + str(layer_start),
+                                                  'mlp.mlp.' + str(layer_start + 1)],
+                                                 ['mlp.mlp.' + str(layer_start + layer_offset),
+                                                  'mlp.mlp.' + str(layer_start + layer_offset + 1)],
+                                                 ['mlp.mlp.' + str(layer_start + (layer_offset * 2)),
+                                                  'mlp.mlp.' + str(layer_start + (layer_offset * 2) + 1)]])
 
     model_prepared = torch.quantization.prepare_qat(model_fused)
     criterion = torch.nn.BCELoss()

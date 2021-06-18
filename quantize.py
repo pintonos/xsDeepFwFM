@@ -27,9 +27,10 @@ def main(args):
 
     model.eval()
     model.to(torch.device('cpu'))
+    print(model)
 
     # dynamic quantization
-    model_dynamic_quantized = torch.quantization.quantize_dynamic(model=model, qconfig_spec={'mlp'}, dtype=torch.qint8)
+    '''model_dynamic_quantized = torch.quantization.quantize_dynamic(model=model, qconfig_spec={'mlp'}, dtype=torch.qint8)
     loss, auc, prauc, rce = test(model_dynamic_quantized , test_data_loader, criterion, torch.device('cpu'))
     print(f'dynamic quantization test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     print_size_of_model(model_dynamic_quantized)
@@ -37,10 +38,10 @@ def main(args):
         batched_dataset = torch.utils.data.Subset(dataset, np.arange(batch_size * 500))
         batched_data_loader = torch.utils.data.DataLoader(batched_dataset, batch_size=batch_size, num_workers=0)
         print(f"batch size:\t{batch_size}")
-        inference_time_cpu(model_dynamic_quantized, batched_data_loader)
+        inference_time_cpu(model_dynamic_quantized, batched_data_loader, profile=args.profile_inference)'''
 
     # static quantization
-    model_static_quantized = static_quantization(model, valid_data_loader, criterion)
+    '''model_static_quantized = static_quantization(model, valid_data_loader, criterion, dropout_layer=False)
     loss, auc, prauc, rce = test(model_static_quantized, test_data_loader, criterion, torch.device('cpu'))
     print(f'static quantization test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     print_size_of_model(model_static_quantized)
@@ -48,12 +49,12 @@ def main(args):
         batched_dataset = torch.utils.data.Subset(dataset, np.arange(batch_size * 500))
         batched_data_loader = torch.utils.data.DataLoader(batched_dataset, batch_size=batch_size, num_workers=0)
         print(f"batch size:\t{batch_size}")
-        inference_time_cpu(model_static_quantized, batched_data_loader)
+        inference_time_cpu(model_static_quantized, batched_data_loader, profile=args.profile_inference)'''
 
     # QAT
-    model_qat = get_model('dfwfm', dataset, batch_norm=False).to(device) # batch norm not supported in train mode yet TODO dropout?
+    model_qat = get_model('dfwfm', dataset, batch_norm=False, dropout=0.2).to(device) # batch norm not supported in train mode yet, use dropout instead
     early_stopper_qat = EarlyStopper(num_trials=2, save_path=f'{args.model_path[:-3]}_qat.pt')
-    model_qat = quantization_aware_training(model_qat, train_data_loader, valid_data_loader, early_stopper_qat, device=device, epochs=args.epochs)
+    model_qat = quantization_aware_training(model_qat, train_data_loader, valid_data_loader, early_stopper_qat, device=device, epochs=args.epochs, dropout_layer=True, bach_norm_layer=False)
     loss, auc, prauc, rce = test(model_qat, test_data_loader, criterion, torch.device('cpu'))
     print(f'qat test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     print_size_of_model(model_qat)
@@ -61,7 +62,7 @@ def main(args):
         batched_dataset = torch.utils.data.Subset(dataset, np.arange(batch_size * 500))
         batched_data_loader = torch.utils.data.DataLoader(batched_dataset, batch_size=batch_size, num_workers=0)
         print(f"batch size:\t{batch_size}")
-        inference_time_cpu(model_qat, batched_data_loader)
+        inference_time_cpu(model_qat, batched_data_loader, profile=args.profile_inference)
 
 
 if __name__ == '__main__':

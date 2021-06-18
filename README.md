@@ -34,12 +34,22 @@ This repository is part of my master thesis.
 | Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) |  Notes |
 |-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|--------|
 | EmbeddingBag    | None          | (0,0,0)       | 0.4473    | 0.8058 | 0.6106    | 21.71 | 11,956,823    |  47.84    |
-| EmbeddingBag    | None          | (400,400,400) | 0.4447    | 0.8085 | 0.6158    | 22.16 | 12,436,824    |  49.780   | 0.0 dropout, 1e-6
+| EmbeddingBag    | None          | (400,400,400) | 0.4447    | 0.8086 | 0.6157    | 22.17 | 12,436,824    |  49.780   | 0.0 dropout, 1e-6
 | QR EmbeddingBag | None          | (400,400,400) | 0.4458    | 0.8072 | 0.6140    | 21.97 |  4,294,354    |  17.217   | 4 collisions, 0.0 dropout, 1e-6
-| QR EmbeddingBag | None          | (400,400,400) | 0.4517    | 0.8008 | 0.6033    | 20.94 |  1,771,504    |   7.125   | 60 collisions TODO
+| QR EmbeddingBag | None          | (400,400,400) | 0.4496    | 0.8031 | 0.6076    | 21.31 |  1,771,504    |   7.125   | 60 collisions, 0.0 dropout, 1e-6
 | EmbeddingBag    | Dynamic       | (400,400,400) | 0.4455    | 0.8076 | 0.6143    | 22.02 | 12,436,824    |  48.35    | TODO
 | EmbeddingBag    | Static        | (400,400,400) | 0.4456    | 0.8076 | 0.6142    | 22.01 | 12,436,824    |  24.46    | TODO
 | EmbeddingBag    | QAT           | (400,400,400) | 0.4459    | 0.8073 | 0.6135    | 21.94 | 12,436,824    |  24.46    | TODO       
+| EmbeddingBag    | None          | (200,200,200) | 0.4448    | 0.8084 | 0.6156    | 22.15 | 11,028,101    |  44.138   | KD, a=0.05, t=3
+| EmbeddingBag    | None          | (200,200,200) | 0.4449    | 0.8082 | 0.6154    | 22.13 | 11,028,101    |  44.138   | KD, a=0.1, t=3  
+| EmbeddingBag    | None          | (200,200,200) | 0.4454    | 0.8077 | 0.6144    | 22.04 | 11,028,101    |  44.138   | KD, a=0.5, t=3
+| EmbeddingBag    | None          | (200,200,200) | 0.4490    | 0.8037 | 0.6080    | 21.40 | 11,028,101    |  44.138   | KD, a=0.9, t=3
+| EmbeddingBag    | None          | (200,200,200) | 0.4450    | 0.8082 | 0.6151    | 22.11 | 11,028,101    |  44.138   | no KD correct?
+| EmbeddingBag    | None          | (100,100,100) | 0.4449    | 0.8082 | 0.6154    | 22.13 | 11,028,101    |  44.138   | KD, a=0.1, t=3  TODO
+| EmbeddingBag    | None          | (100,100,100) | 0.4449    | 0.8082 | 0.6154    | 22.13 | 11,028,101    |  44.138   | no KD correct?
+
+2021-06-18 21:47:52,199 - root - INFO - test loss: 0.447514 auc: 0.805643 prauc: 0.6103 rce: 21.6845
+INFO:root:epoch: 21
 
 
 #### Embeddings - Latency
@@ -105,14 +115,25 @@ This repository is part of my master thesis.
 | EmbeddingBag    | None          | (400,400,400) | 0.0360    | 0.8120 |  0.0402   | 11.45 | 348,767,961   | 1395.106  | Retweet with comment, 3 Epochs no OF
 
 ### K80, 15 threshold
-- Epochs: 10 with early stopping
+- Epochs: 50 with early stopping
+- Dropout: 0.2
 
 | Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) | Notes      |
 |-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|------------|
-| EmbeddingBag    | None          | (400,400,400) | 0.3220    | 0.9388 |  0.9086   | 52.59 | 131,937,765   |  527.786  | Like, 2 Epoch, 0.2 dropout
-| EmbeddingBag    | None          | (400,400,400) | 0.3324    | 0.9388 |  0.9083   | 51.06 | 131,937,765   |  527.786  | Like, 3 Epochs, 0.5 dropout TODO more training
-| EmbeddingBag    | None          | (400,400,400) | 0.2155    | 0.8814 |  0.5378   | 32.81 | 131,937,765   |  527.786  | Retweet, early stopped: 8
-| EmbeddingBag    | None          | (400,400,400) | 0.2155    | 0.8814 |  0.5378   | 32.81 | 131,937,765   |  527.786  | Retweet with comment, epoch +4 looking good 
+| EmbeddingBag    | None          | (0,0,0)       | 0.3248    | 0.9368 |  0.9049   | 52.19 | 131,425,764   |  525.721  | Like
+| EmbeddingBag    | None          | (0,0,0)       | 0.2202    | 0.8754 |  0.5223   | 31.35 | 131,425,764   |  525.721  | Retweet
+| EmbeddingBag    | None          | (0,0,0)       | 0.0988    | 0.8463 |  0.1388   | 16.90 | 131,425,764   |  525.721  | Reply
+| EmbeddingBag    | None          | (0,0,0)       | 0.0360    | 0.8231 |  0.0456   | 11.43 | 131,425,764   |  525.721  | Retweet with comment
+| EmbeddingBag    | None          | (400,400,400) | 0.3180    | 0.9398 |  0.9100   | 53.19 | 131,937,765   |  527.786  | Like
+| EmbeddingBag    | None          | (400,400,400) | 0.2161    | 0.8807 |  0.5355   | 32.63 | 131,937,765   |  527.786  | Retweet
+| EmbeddingBag    | None          | (400,400,400) | 0.0961    | 0.8549 |  0.1525   | 19.17 | 131,937,765   |  527.786  | Reply
+| EmbeddingBag    | None          | (400,400,400) | 0.0373    | 0.8187 |  0.0408   |  8.32 | 131,937,765   |  527.786  | Retweet with comment
+
+TODO try different batch size: 2048
+
+test loss: 0.035917 auc: 0.812265 prauc: 0.0358 rce: 11.7554
+
+test loss: 0.035922 auc: 0.812261 prauc: 0.0359 rce: 11.7412
 
 
 ## References

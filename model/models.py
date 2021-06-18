@@ -9,9 +9,13 @@ from model.layers import FeaturesLinear, FeaturesEmbedding, MultiLayerPerceptron
 class MultiLayerPerceptronModel(torch.nn.Module):
     def __init__(self, field_dims, embed_dim, mlp_dims, dropout=0.0, use_emb_bag=False, use_qr_emb=False, qr_collisions=4, batch_norm=True):
         super().__init__()
+        self.use_emb_bag = use_emb_bag
+        self.use_qr_emb = use_qr_emb
+        self.qr_collisions = qr_collisions
         self.embeddings = FeaturesEmbedding(field_dims, embed_dim, use_emb_bag, use_qr_emb, qr_collisions)
         self.embed_output_dim = len(field_dims) * embed_dim
         self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout, batch_norm=batch_norm)
+        self.mlp_dims = mlp_dims
 
     def forward(self, x):
         """
@@ -38,6 +42,9 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         self.use_lw = use_lw
         self.use_fwlw = use_fwlw
         self.mlp_dims = mlp_dims
+        self.use_emb_bag = use_emb_bag
+        self.use_qr_emb = use_qr_emb
+        self.qr_collisions = qr_collisions
         self.linear = FeaturesLinear(field_dims)
         self.embeddings = FeaturesEmbedding(field_dims, embed_dim, use_emb_bag, use_qr_emb, qr_collisions)
         self.embed_output_dim = len(field_dims) * embed_dim
@@ -81,6 +88,7 @@ class FieldWeightedFactorizationMachineModel(torch.nn.Module):
         self.use_fwlw = use_fwlw
         self.use_emb_bag = use_emb_bag
         self.use_qr_emb = use_qr_emb
+        self.qr_collisions = qr_collisions
         self.linear = FeaturesLinear(field_dims)
         self.embeddings = FeaturesEmbedding(field_dims, embed_dim, use_emb_bag, use_qr_emb, qr_collisions)
         self.fwfm_linear = torch.nn.Linear(embed_dim, self.num_fields, bias=False)
@@ -109,10 +117,10 @@ class FieldWeightedFactorizationMachineModel(torch.nn.Module):
 
 class EarlyStopper(object):
 
-    def __init__(self, num_trials, save_path):
+    def __init__(self, num_trials, save_path, accuracy=0):
         self.num_trials = num_trials
         self.trial_counter = 0
-        self.best_accuracy = 0
+        self.best_accuracy = accuracy
         self.save_path = save_path
 
     def is_continuable(self, model, accuracy, epoch, optimizer, loss):
@@ -125,7 +133,8 @@ class EarlyStopper(object):
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
-                'loss': loss
+                'loss': loss,
+                'accuracy': accuracy
             }, self.save_path)
             return True
         elif self.trial_counter + 1 < self.num_trials:
