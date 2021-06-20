@@ -112,6 +112,42 @@ def plot_latency_vs_auc():
     plt.show()
 
 
+def plot_latency_vs_batch_size():
+    # idea from: https://chart-studio.plotly.com/~aman_cold/70/#/
+    # https://matplotlib.org/stable/tutorials/colors/colormaps.html
+    rescale = lambda y: (y - np.min(y)) / (np.max(y) - np.min(y))
+
+    batch_sizes = [64, 128, 256, 512]
+    latency = [9.132, 15.876, 27.849, 54.623]
+    throughput = [b/l for (b, l) in zip(batch_sizes, latency)]
+
+    print(throughput)
+
+    fig, ax1 = plt.subplots()
+
+    color = 'black'
+    ax1.set_xlabel('Batch Size (CPU)')
+    ax1.set_ylabel('Latency (ms)', color=color)
+    ax1.tick_params(axis='y', labelcolor=color)
+    plt.bar(np.arange(len(latency)), height=latency, color=plt.cm.get_cmap('winter')(rescale(batch_sizes)))
+    plt.xticks(np.arange(len(latency)), map(str, batch_sizes) )
+
+    ax1.set_axisbelow(True)
+    ax1.yaxis.grid(color='gray', linestyle='dashed')
+    ax1.xaxis.grid(color='gray', linestyle='dashed')
+
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+    color = 'tab:orange'
+    ax2.set_ylabel('Throughput (items/ms)', color=color)  # we already handled the x-label with ax1
+    ax2.plot(throughput, color=color, marker='D')
+    ax2.tick_params(axis='y', labelcolor=color)
+
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    fig.savefig('figures/batch_latency.png', dpi=300)
+    plt.show()
+
+
 def plot_profile():
     category_names = ['aten::mul', 'aten::sum',
                       'aten::as_strided', 'aten::select', 'aten::embedding', 'aten::addmm']
@@ -147,8 +183,9 @@ def plot_profile():
     plt.show()
 
 
-plot_kd_val_loss()
+#plot_kd_val_loss()
 #plot_latency_vs_auc_quantization()
 #plot_latency_vs_auc_qr()
 #plot_latency_vs_auc()
 #plot_profile()
+plot_latency_vs_batch_size()
