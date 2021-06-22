@@ -8,7 +8,7 @@ def get_parser():
     parser.add_argument('--dataset_path', help='criteo/train.txt', default='./data/criteo/train.txt')
     parser.add_argument('--model_name', help='fwfm or dfwfm', default='dfwfm')
     parser.add_argument('--model_path', help='path to checkpoint of model')
-    parser.add_argument('--teacher_model_path', help='path to checkpoint of teacher model')
+    parser.add_argument('--base_model_path', help='path to checkpoint of teacher model or model to quantize')
     parser.add_argument('--mlp_dim', help='neurons per layer', type=int, default=400)
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--learning_rate', type=float, default=0.001)

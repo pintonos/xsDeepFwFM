@@ -1,23 +1,17 @@
-import math
 import shutil
 import struct
 from collections import defaultdict
-from functools import lru_cache
 from pathlib import Path
-import os
 
 import lmdb
 import numpy as np
 import torch.utils.data
 from tqdm import tqdm
 
-import pandas as pd
-import dask.dataframe as dd
-
 
 class TwitterDataset(torch.utils.data.Dataset):
 
-    def __init__(self, dataset_path='G://dac//twitter.txt', cache_path='G://dac//.twitter', rebuild_cache=False, min_threshold=30, twitter_label='like'):
+    def __init__(self, dataset_path='G://dac//twitter.txt', cache_path='G://dac//.twitter', rebuild_cache=False, min_threshold=15, twitter_label='like'):
         self.NUM_LABELS = 4
         self.NUM_FEATS = 47
         self.NUM_INT_FEATS = 11

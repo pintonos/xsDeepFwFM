@@ -301,38 +301,43 @@ def static_quantization(model, dataloader, criterion, dropout_layer=False):
     model_static_quantized = torch.quantization.convert(model_prepared)
     return model_static_quantized
 
-def quantization_aware_training(model, train_data_loader, valid_data_loader, early_stopper, device, epochs=50, dropout_layer=True, bach_norm_layer=False):
+
+def quantization_aware_training(model, train_data_loader, valid_data_loader, test_data_loader, early_stopper, device, logger, epochs=50, model_path=None):
     model.train()
     model.mlp.quantize = True
     model.mlp.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
     model.embeddings.qconfig = torch.quantization.float_qparams_weight_only_qconfig
-
-    layer_offset = 2
-    layer_offset += 1 if dropout_layer else 0
-    layer_offset += 1 if bach_norm_layer else 0
-    layer_start = 1 if dropout_layer else 0
-
+    
     #  fusing linear and batchnorm1d in training not supported yet
     #  fuse linear and relu
+    #  use fixed layer numbering!
     model_fused = torch.quantization.fuse_modules(model,
-                                                [['mlp.mlp.' + str(layer_start),
-                                                  'mlp.mlp.' + str(layer_start + 1)],
-                                                 ['mlp.mlp.' + str(layer_start + layer_offset),
-                                                  'mlp.mlp.' + str(layer_start + layer_offset + 1)],
-                                                 ['mlp.mlp.' + str(layer_start + (layer_offset * 2)),
-                                                  'mlp.mlp.' + str(layer_start + (layer_offset * 2) + 1)]])
+                                                [['mlp.mlp.1', 'mlp.mlp.2'],
+                                                ['mlp.mlp.4', 'mlp.mlp.5'],
+                                                ['mlp.mlp.7', 'mlp.mlp.8']])
 
     model_prepared = torch.quantization.prepare_qat(model_fused)
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model_prepared.parameters(), lr=0.001, weight_decay=1e-6)
-    for epoch_i in range(epochs):
+
+    epoch = 0
+    if model_path:
+        checkpoint = torch.load(model_path)
+        model_prepared.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        epoch = checkpoint['epoch']
+        early_stopper.best_accuracy = checkpoint['accuracy']
+    for epoch_i in range(epoch + 1, epoch + epochs + 1):
         train(model_prepared, optimizer, train_data_loader, criterion, device)
         loss, auc, prauc, rce = test(model_prepared, valid_data_loader, criterion, device)
-        print('epoch:', epoch_i)
-        print(f'valid loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+        logger.info(f'epoch: {epoch_i}')
+        logger.info(f'valid loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
         if not early_stopper.is_continuable(model_prepared, auc, epoch_i, optimizer, loss):
-            print(f'validation: best auc: {early_stopper.best_accuracy}')
+            logger.info(f'validation: best auc: {early_stopper.best_accuracy}')
             break
+        
+        loss, auc, prauc, rce = test(model_prepared, test_data_loader, criterion, device)
+        logger.info(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
 
     model_prepared.eval()
     model_prepared.to(torch.device('cpu'))

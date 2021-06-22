@@ -10,7 +10,7 @@ from model.models import EarlyStopper
 from model.util import get_dataset, get_dataloaders, get_model, train, test, print_size_of_model, get_full_model_path
 
 from util import parameters
-from util.logging import get_logger
+from util.custom_logging import get_logger
 
 def main(args, logger):
     
@@ -30,7 +30,7 @@ def main(args, logger):
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         epoch = checkpoint['epoch']
         loss = checkpoint['loss']
-        best_accuracy = checkpoint['accuracy']
+        #best_accuracy = checkpoint['accuracy']
     else:
         model = get_model(args.model_name, dataset, mlp_dims=args.mlp_dim, dropout=args.dropout, batch_norm=args.use_bn, use_emb_bag=args.use_emb_bag, use_qr_emb=args.use_qr_emb, qr_collisions=args.qr_collisions).to(device)
         optimizer = torch.optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
@@ -38,7 +38,8 @@ def main(args, logger):
     logger.info(model)
 
     save_path = get_full_model_path(save_dir=args.save_dir, dataset_name=args.dataset_name, twitter_label=args.twitter_label, model_name=args.model_name, model=model, epochs=args.epochs + epoch)
-    early_stopper = EarlyStopper(num_trials=10, save_path=save_path, accuracy=best_accuracy)
+    logger.info(save_path)
+    early_stopper = EarlyStopper(num_trials=5, save_path=save_path, accuracy=best_accuracy)
 
     for epoch_i in range(epoch + 1, epoch + args.epochs + 1):
         logger.info(f'epoch: {epoch_i}')
