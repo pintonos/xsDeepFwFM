@@ -1,3 +1,4 @@
+from model.layers import FactorizationMachine
 import torch
 from sklearn import metrics
 import tqdm
@@ -8,7 +9,7 @@ from torch.utils.data import DataLoader
 
 from dataset.criteo import CriteoDataset
 from dataset.twitter import TwitterDataset
-from model.models import FieldWeightedFactorizationMachineModel, DeepFieldWeightedFactorizationMachineModel, MultiLayerPerceptronModel
+from model.models import DeepFactorizationMachineModel, ExtremeDeepFactorizationMachineModel, FieldWeightedFactorizationMachineModel, DeepFieldWeightedFactorizationMachineModel, LogisticRegressionModel, MultiLayerPerceptronModel, FactorizationMachineModel
 
 
 def compute_prauc(gt, pred):
@@ -76,22 +77,30 @@ def get_dataloaders(dataset, dataset_name, batch_size, random=False):
     return train_data_loader, valid_data_loader, test_data_loader
 
 
-def get_model(name, dataset, mlp_dims=(400, 400, 400), dropout=0.0, batch_norm=True, use_emb_bag=True, use_qr_emb=False, qr_collisions=4):
+def get_model(name, dataset, mlp_dims=(400, 400, 400), dropout=0.0, batch_norm=True, use_qr_emb=False, qr_collisions=4):
     field_dims = dataset.field_dims
     if type(mlp_dims) is int:
         mlp_dims = (mlp_dims, mlp_dims, mlp_dims)
     if name == 'fwfm' or mlp_dims == (0,0,0):
-        return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb)
+        return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_qr_emb=use_qr_emb)
     elif name == 'dfwfm':
-        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_emb_bag=use_emb_bag, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions, mlp_dims=mlp_dims, dropout=dropout, batch_norm=batch_norm)
+        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions, mlp_dims=mlp_dims, dropout=dropout, batch_norm=batch_norm)
     elif name == 'mlp':
         return MultiLayerPerceptronModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims, dropout=dropout, batch_norm=batch_norm)
+    elif name == 'fm':
+        return FactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions)
+    elif name == 'dfm':
+        return DeepFactorizationMachineModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims)
+    elif name == 'xdfm':
+        return ExtremeDeepFactorizationMachineModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims, dropout=dropout, cross_layer_sizes=(200, 200, 200))
+    elif name == 'lr':
+        return LogisticRegressionModel(field_dims=field_dims)
     else:
         raise ValueError('unknown model name: ' + name)
 
 
 def get_full_model_path(save_dir, dataset_name, twitter_label, model_name, model, epochs):
-    return f"{save_dir}/{dataset_name if dataset_name != 'twitter' else dataset_name + '_' + twitter_label}_{model_name}{model.mlp_dims if hasattr(model, 'mlp_dims') else ''}{'_embbag' if model.use_emb_bag and not model.use_qr_emb else ''}{'_qr' + str(model.qr_collisions) if model.use_qr_emb else ''}_{epochs}.pt"
+    return f"{save_dir}/{dataset_name if dataset_name != 'twitter' else dataset_name + '_' + twitter_label}_{model_name}{model.mlp_dims if hasattr(model, 'mlp_dims') else ''}{'_qr' + str(model.qr_collisions) if hasattr(model, 'use_qr_emb') and model.use_qr_emb else ''}_{epochs}.pt"
 
 
 def train(model, optimizer, data_loader, criterion, device, log_interval=100):

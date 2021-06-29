@@ -22,29 +22,8 @@ from torch.nn.parameter import Parameter
 import numpy as np
 
 
-class QREmbeddingBag(nn.Module):
-    r"""Computes sums or means over two 'bags' of embeddings, one using the quotient
-    of the indices and the other using the remainder of the indices, without
-    instantiating the intermediate embeddings, then performs an operation to combine these.
-
-    For bags of constant length and no :attr:`per_sample_weights`, this class
-
-        * with ``mode="sum"`` is equivalent to :class:`~torch.nn.Embedding` followed by ``torch.sum(dim=0)``,
-        * with ``mode="mean"`` is equivalent to :class:`~torch.nn.Embedding` followed by ``torch.mean(dim=0)``,
-        * with ``mode="max"`` is equivalent to :class:`~torch.nn.Embedding` followed by ``torch.max(dim=0)``.
-
-    However, :class:`~torch.nn.EmbeddingBag` is much more time and memory efficient than using a chain of these
-    operations.
-
-    QREmbeddingBag also supports per-sample weights as an argument to the forward
-    pass. This scales the output of the Embedding before performing a weighted
-    reduction as specified by ``mode``. If :attr:`per_sample_weights`` is passed, the
-    only supported ``mode`` is ``"sum"``, which computes a weighted sum according to
-    :attr:`per_sample_weights`.
-
-    Known Issues:
-    Autograd breaks with multiple GPUs. It breaks only with multiple embeddings.
-
+class QREmbedding(nn.Module):
+    r"""
     Args:
         num_categories (int): total number of unique categories. The input indices must be in
                               0, 1, ..., num_categories - 1.
@@ -111,9 +90,8 @@ class QREmbeddingBag(nn.Module):
 
     def __init__(self, num_categories, embedding_dim, num_collisions,
                  operation='mult', max_norm=None, norm_type=2.,
-                 scale_grad_by_freq=False, mode='mean', sparse=False,
-                 _weight=None):
-        super(QREmbeddingBag, self).__init__()
+                 scale_grad_by_freq=False, _weight=None):
+        super(QREmbedding, self).__init__()
 
         assert operation in ['concat', 'mult', 'add'], 'Not valid operation!'
 
@@ -146,23 +124,19 @@ class QREmbeddingBag(nn.Module):
                 'Shape of weight for remainder table does not match num_embeddings and embedding_dim'
             self.weight_q = Parameter(_weight[0])
             self.weight_r = Parameter(_weight[1])
-        self.mode = mode
-        self.sparse = sparse
 
     def reset_parameters(self):
         nn.init.uniform_(self.weight_q, np.sqrt(1 / self.num_categories))
         nn.init.uniform_(self.weight_r, np.sqrt(1 / self.num_categories))
 
-    def forward(self, input, offsets=None, per_sample_weights=None):
+    def forward(self, input, offsets=None):
         input_q = (input // self.num_collisions).long()
         input_r = torch.remainder(input, self.num_collisions).long()
 
-        embed_q = F.embedding_bag(input_q, self.weight_q, offsets, self.max_norm,
-                                  self.norm_type, self.scale_grad_by_freq, self.mode,
-                                  self.sparse, per_sample_weights)
-        embed_r = F.embedding_bag(input_r, self.weight_r, offsets, self.max_norm,
-                                  self.norm_type, self.scale_grad_by_freq, self.mode,
-                                  self.sparse, per_sample_weights)
+        embed_q = F.embedding(input_q, self.weight_q, offsets, self.max_norm,
+                                  self.norm_type, self.scale_grad_by_freq)
+        embed_r = F.embedding(input_r, self.weight_r, offsets, self.max_norm,
+                                  self.norm_type, self.scale_grad_by_freq)
 
         if self.operation == 'concat':
             embed = torch.cat((embed_q, embed_r), dim=1)
@@ -181,5 +155,4 @@ class QREmbeddingBag(nn.Module):
             s += ', norm_type={norm_type}'
         if self.scale_grad_by_freq is not False:
             s += ', scale_grad_by_freq={scale_grad_by_freq}'
-        s += ', mode={mode}'
         return s.format(**self.__dict__)

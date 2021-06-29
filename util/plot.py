@@ -4,10 +4,11 @@ import numpy as np
 
 def plot_kd_val_loss():
     epochs = np.arange(1, 50)
-    val_losses_200_student = [] # TODO
-    val_losses_200_small = [] # TODO
-    val_losses_100_student = [] # TODO
-    val_losses_100_small = [0.448422, 0.446495, 0.445742, 0.445319, 0.445052, 0.444879, 0.444743, 0.444638, 0.444595, 0.444482, 0.444461, 0.444438, 0.444387, 0.444376, 0.444338, 0.444296, 0.444263, 0.444256, 0.444247, 0.444249, 0.444247, 0.444244, 0.444244, 0.444268, 0.444233, 0.444266, 0.444213, 0.444234, 0.444230, 0.444246, 0.444190, 0.444172, 0.444201, 0.444166, 0.444208, 0.444131, 0.444099, 0.444113, 0.444167, 0.444097, 0.444105, 0.444145]
+    val_losses_200_student = [0.447937, 0.445945, 0.445116, 0.444715, 0.444496, 0.444368, 0.444232, 0.444204, 0.444119, 0.444070, 0.444009] + [None]*38 # TODO
+    val_losses_200_small = [0.447923, 0.445929, 0.445098, 0.444676, 0.444403, 0.444277, 0.444157, 0.444034, 0.443972, 0.443941, 0.443864, 0.443884, 0.443840, 0.443898, 0.443917, 0.443894, 0.443852, 0.443828] + [None]*31
+    val_losses_100_student = [None] * 49 # TODO
+    val_losses_100_small = [0.448422, 0.446495, 0.445742, 0.445319, 0.445052, 0.444879, 0.444743, 0.444638, 0.444595, 0.444482, 0.444461, 0.444438, 0.444387, 0.444376, 0.444338, 0.444296, 0.444263, 0.444256, 0.444247, 0.444249, 0.444247, 0.444244, 0.444244, 0.444268, 0.444233, 0.444266,
+                            0.444213, 0.444234, 0.444230, 0.444246, 0.444190, 0.444172, 0.444201, 0.444166, 0.444208, 0.444131, 0.444099, 0.444113, 0.444167, 0.444097, 0.444105, 0.444145]  + [None]*7
 
     plt.figure(figsize=(10, 5))
     plt.plot(epochs, val_losses_200_student, label="(200,200,200) + KD", color="orange", marker='D')
@@ -15,10 +16,10 @@ def plot_kd_val_loss():
     plt.plot(epochs, val_losses_100_student, label="(100,100,100) + KD", color="blue", marker='D')
     plt.plot(epochs, val_losses_100_small, label="(100,100,100)", linestyle="dashed", color="blue", marker='D')
     plt.xlabel("Epochs")
-    plt.xticks(np.arange(1, 50, 1.0))
+    plt.xticks(np.arange(1, 50, 5.0))
     plt.ylabel("Validation LogLoss")
     plt.legend()
-    plt.savefig('figures/kd_val_loss.png', dpi=300)
+    #plt.savefig('figures/kd_val_loss.png', dpi=300)
     plt.show()
 
 
@@ -118,10 +119,16 @@ def plot_latency_vs_batch_size():
     rescale = lambda y: (y - np.min(y)) / (np.max(y) - np.min(y))
 
     batch_sizes = [64, 128, 256, 512]
-    latency = [9.132, 15.876, 27.849, 54.623]
-    throughput = [b/l for (b, l) in zip(batch_sizes, latency)]
 
-    print(throughput)
+    latency1 = [9.232, 14.276, 25.749, 49.082]
+    latency2 = [10.139, 16.034, 27.146, 49.352]
+    latency3 = [11.141, 16.404, 26.892, 46.676]
+    # latency1 = [72.418, 143.632, 279.482, 549.400]
+
+    throughput1 = [b / l for (b, l) in zip(batch_sizes, latency1)]
+    throughput2 = [b / l for (b, l) in zip(batch_sizes, latency2)]
+    throughput3 = [b / l for (b, l) in zip(batch_sizes, latency3)]
+    #throughput4 = [b / l for (b, l) in zip(batch_sizes, latency4)]
 
     fig, ax1 = plt.subplots()
 
@@ -129,8 +136,18 @@ def plot_latency_vs_batch_size():
     ax1.set_xlabel('Batch Size (CPU)')
     ax1.set_ylabel('Latency (ms)', color=color)
     ax1.tick_params(axis='y', labelcolor=color)
-    plt.bar(np.arange(len(latency)), height=latency, color=plt.cm.get_cmap('winter')(rescale(batch_sizes)))
-    plt.xticks(np.arange(len(latency)), map(str, batch_sizes) )
+    for i, l1 in enumerate(latency1):
+        ax1.bar(i - 0.2, l1, width=0.2, color='b', align='center')
+        ax1.bar(i, latency2[i], width=0.2, color='r', align='center')
+        ax1.bar(i + 0.2, latency3[i], width=0.2, color='g', align='center')
+        #ax1.bar(i + 0.4, latency4[i], width=0.2, color='r', align='center')
+    #plt.bar(np.arange(len(latency1)), height=latency1, color=plt.cm.get_cmap('winter')(rescale(batch_sizes)))
+    plt.xticks(np.arange(len(batch_sizes)), map(str, batch_sizes))
+
+    colors = {'Dynamic': 'b', 'Static': 'r', 'QAT': 'g'}
+    labels = list(colors.keys())
+    handles = [plt.Rectangle((0, 0), 1, 1, color=colors[label]) for label in labels]
+    plt.legend(handles, labels)
 
     ax1.set_axisbelow(True)
     ax1.yaxis.grid(color='gray', linestyle='dashed')
@@ -138,13 +155,15 @@ def plot_latency_vs_batch_size():
 
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
-    color = 'tab:orange'
+    color = 'black'
     ax2.set_ylabel('Throughput (items/ms)', color=color)  # we already handled the x-label with ax1
-    ax2.plot(throughput, color=color, marker='D')
+    ax2.plot([i - 0.2 for i in range(len(latency1))], throughput1, color='cornflowerblue', marker='D')
+    ax2.plot([i for i in range(len(latency2))], throughput2, color='darkred', marker='D')
+    ax2.plot([i + 0.2 for i in range(len(latency3))], throughput3, color='darkgreen', marker='D')
     ax2.tick_params(axis='y', labelcolor=color)
 
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    fig.savefig('figures/batch_latency.png', dpi=300)
+    fig.savefig('../figures/batch_latency.png', dpi=300)
     plt.show()
 
 
