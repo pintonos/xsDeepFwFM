@@ -39,7 +39,7 @@ def main(args, logger):
 
     save_path = get_full_model_path(save_dir=args.save_dir, dataset_name=args.dataset_name, twitter_label=args.twitter_label, model_name=args.model_name, model=model, epochs=args.epochs + epoch)
     logger.info(save_path)
-    early_stopper = EarlyStopper(num_trials=2, save_path=save_path, accuracy=best_accuracy)
+    early_stopper = EarlyStopper(num_trials=5, save_path=save_path, accuracy=best_accuracy)
 
     for epoch_i in range(epoch + 1, epoch + args.epochs + 1):
         logger.info(f'epoch: {epoch_i}')

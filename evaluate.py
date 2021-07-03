@@ -21,8 +21,8 @@ def main(args):
 
     print_size_of_model(model)
 
-    loss, auc, prauc, rce = test(model, test_data_loader, criterion, device)
-    print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
+    #loss, auc, prauc, rce = test(model, test_data_loader, criterion, device)
+    #print(f'test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
 
     # CPU
     batch_sizes = [1, 64, 128, 256, 512]

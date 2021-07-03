@@ -4,11 +4,12 @@ import numpy as np
 
 def plot_kd_val_loss():
     epochs = np.arange(1, 50)
-    val_losses_200_student = [0.447937, 0.445945, 0.445116, 0.444715, 0.444496, 0.444368, 0.444232, 0.444204, 0.444119, 0.444070, 0.444009] + [None]*38 # TODO
-    val_losses_200_small = [0.447923, 0.445929, 0.445098, 0.444676, 0.444403, 0.444277, 0.444157, 0.444034, 0.443972, 0.443941, 0.443864, 0.443884, 0.443840, 0.443898, 0.443917, 0.443894, 0.443852, 0.443828] + [None]*31
-    val_losses_100_student = [None] * 49 # TODO
-    val_losses_100_small = [0.448422, 0.446495, 0.445742, 0.445319, 0.445052, 0.444879, 0.444743, 0.444638, 0.444595, 0.444482, 0.444461, 0.444438, 0.444387, 0.444376, 0.444338, 0.444296, 0.444263, 0.444256, 0.444247, 0.444249, 0.444247, 0.444244, 0.444244, 0.444268, 0.444233, 0.444266,
-                            0.444213, 0.444234, 0.444230, 0.444246, 0.444190, 0.444172, 0.444201, 0.444166, 0.444208, 0.444131, 0.444099, 0.444113, 0.444167, 0.444097, 0.444105, 0.444145]  + [None]*7
+    val_losses_200_student =    [0.447937, 0.445945, 0.445116, 0.444715, 0.444496, 0.444368, 0.444232, 0.444204, 0.444119, 0.444070, 0.444009] + [None]*38 # TODO more
+    val_losses_200_small =      [0.447923, 0.445929, 0.445098, 0.444676, 0.444403, 0.444277, 0.444157, 0.444034, 0.443972, 0.443941, 0.443864, 0.443884, 0.443840, 0.443898, 0.443917, 0.443894, 0.443852, 0.443828] + [None]*31 # TODO more
+    val_losses_100_student =    [0.448605, 0.446621, 0.445828, 0.445433, 0.445180, 0.444993, 0.444826, 0.444731, 0.444664, 0.444592, 0.444516, 0.444497, 0.444478, 0.444425, 0.444387, 0.444389, 0.444338, 0.444341, 0.444358, 0.444315, 0.444295, 0.444298, 0.444254, 0.444283, 0.444244, 0.444174,
+                                 0.444169, 0.444141, 0.444131, 0.444137, 0.444105, 0.444008, 0.444018, 0.443998, 0.444029, 0.443989, 0.443949, 0.443968, 0.443987, 0.443976, 0.443940, 0.443957, 0.443981, 0.443973, 0.443973, 0.443983]
+    val_losses_100_small =      [0.448422, 0.446495, 0.445742, 0.445319, 0.445052, 0.444879, 0.444743, 0.444638, 0.444595, 0.444482, 0.444461, 0.444438, 0.444387, 0.444376, 0.444338, 0.444296, 0.444263, 0.444256, 0.444247, 0.444249, 0.444247, 0.444244, 0.444244, 0.444268, 0.444233, 0.444266,
+                                0.444213, 0.444234, 0.444230, 0.444246, 0.444190, 0.444172, 0.444201, 0.444166, 0.444208, 0.444131, 0.444099, 0.444113, 0.444167, 0.444097, 0.444105, 0.444145] + [None]*7
 
     plt.figure(figsize=(10, 5))
     plt.plot(epochs, val_losses_200_student, label="(200,200,200) + KD", color="orange", marker='D')
@@ -167,6 +168,61 @@ def plot_latency_vs_batch_size():
     plt.show()
 
 
+def plot_latency_vs_batch_size_qr(cpu=True):
+    if cpu:
+        batch_sizes = [64, 128, 256, 512]
+
+        latency1 = [67.244, 129.276, 253.910, 504.24]
+        latency2 = [39.628, 75.712, 147.116, 288.920]
+    else:
+        batch_sizes = [512, 1024, 2048, 4096]
+
+        latency1 = [9.995, 10.356, 14.040, 20.046]
+        latency2 = [9.275, 10.506, 14.431, 21.580]
+
+
+    throughput1 = [b / l for (b, l) in zip(batch_sizes, latency1)]
+    throughput2 = [b / l for (b, l) in zip(batch_sizes, latency2)]
+
+    fig, ax1 = plt.subplots()
+
+    color = 'black'
+    if cpu:
+        ax1.set_xlabel('Batch Size (CPU)')
+    else:
+        ax1.set_xlabel('Batch Size (CUDA)')
+    ax1.set_ylabel('Latency (ms)', color=color)
+    ax1.tick_params(axis='y', labelcolor=color)
+    for i, l1 in enumerate(latency1):
+        ax1.bar(i - 0.2, l1, width=0.4, color='b', align='center')
+        ax1.bar(i + 0.2, latency2[i], width=0.4, color='g', align='center')
+    plt.xticks(np.arange(len(batch_sizes)), map(str, batch_sizes))
+
+    colors = {'QR 4': 'b', 'QR 60': 'g'}
+    labels = list(colors.keys())
+    handles = [plt.Rectangle((0, 0), 1, 1, color=colors[label]) for label in labels]
+    plt.legend(handles, labels)
+
+    ax1.set_axisbelow(True)
+    ax1.yaxis.grid(color='gray', linestyle='dashed')
+    ax1.xaxis.grid(color='gray', linestyle='dashed')
+
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+    color = 'black'
+    ax2.set_ylabel('Throughput (items/ms)', color=color)  # we already handled the x-label with ax1
+    ax2.plot([i - 0.2 for i in range(len(latency1))], throughput1, color='cornflowerblue', marker='D')
+    ax2.plot([i + 0.2 for i in range(len(latency2))], throughput2, color='darkgreen', marker='D')
+    ax2.tick_params(axis='y', labelcolor=color)
+
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    if cpu:
+        fig.savefig('../figures/batch_latency_qr_cpu.png', dpi=300)
+    else:
+        fig.savefig('../figures/batch_latency_qr_gpu.png', dpi=300)
+    plt.show()
+
+
 def plot_profile():
     category_names = ['aten::mul', 'aten::sum',
                       'aten::as_strided', 'aten::select', 'aten::embedding', 'aten::addmm']
@@ -207,4 +263,5 @@ def plot_profile():
 #plot_latency_vs_auc_qr()
 #plot_latency_vs_auc()
 #plot_profile()
-plot_latency_vs_batch_size()
+#plot_latency_vs_batch_size()
+plot_latency_vs_batch_size_qr(cpu=False)

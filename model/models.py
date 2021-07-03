@@ -13,7 +13,7 @@ Reference: https://github.com/rixwew/pytorch-fm
 
 
 class MultiLayerPerceptronModel(torch.nn.Module):
-    def __init__(self, field_dims, embed_dim, mlp_dims, dropout=0.0, use_qr_emb=False, qr_collisions=4, batch_norm=True):
+    def __init__(self, field_dims, embed_dim, mlp_dims, dropout=0.0, use_qr_emb=False, qr_collisions=4, batch_norm=True, return_raw_logits=False):
         super().__init__()
         self.use_qr_emb = use_qr_emb
         self.qr_collisions = qr_collisions
@@ -21,6 +21,7 @@ class MultiLayerPerceptronModel(torch.nn.Module):
         self.embed_output_dim = len(field_dims) * embed_dim
         self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout, batch_norm=batch_norm)
         self.mlp_dims = mlp_dims
+        self.return_raw_logits = return_raw_logits
 
     def forward(self, x):
         """
@@ -30,6 +31,8 @@ class MultiLayerPerceptronModel(torch.nn.Module):
 
         x = self.mlp(embed_x.view(-1, self.embed_output_dim))
 
+        if self.return_raw_logits:
+            return x.squeeze(1)
         return torch.sigmoid(x.squeeze(1))
 
 
@@ -41,7 +44,7 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         Deng et al., DeepLight: Deep Lightweight Feature Interactions for Accelerating CTR Predictions in Ad Serving, 2021.
     """
 
-    def __init__(self, field_dims, embed_dim, mlp_dims, dropout=0.0, use_lw=False, use_fwlw=False, use_qr_emb=False, qr_collisions=4, quantize_dnn=False, batch_norm=True):
+    def __init__(self, field_dims, embed_dim, mlp_dims, dropout=0.0, use_lw=False, use_fwlw=False, use_qr_emb=False, qr_collisions=4, quantize_dnn=False, batch_norm=True, return_raw_logits=False):
         super().__init__()
         self.num_fields = len(field_dims)
         self.use_lw = use_lw
@@ -56,6 +59,7 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         self.fwfm = FieldWeightedFactorizationMachine(field_dims)
         self.mlp = MultiLayerPerceptron(self.embed_output_dim, mlp_dims, dropout, quantize=quantize_dnn, batch_norm=batch_norm)
         self.bias = torch.nn.Parameter(torch.Tensor([0.01]))
+        self.return_raw_logits = return_raw_logits
 
     def forward(self, x):
         """
@@ -74,6 +78,8 @@ class DeepFieldWeightedFactorizationMachineModel(torch.nn.Module):
         else:
             x = fwfm_second_order + self.mlp(embed_x.view(-1, self.embed_output_dim)) + self.bias
 
+        if self.return_raw_logits:
+            return x.squeeze(1)
         return torch.sigmoid(x.squeeze(1))
 
 

@@ -77,16 +77,17 @@ def get_dataloaders(dataset, dataset_name, batch_size, random=False):
     return train_data_loader, valid_data_loader, test_data_loader
 
 
-def get_model(name, dataset, mlp_dims=(400, 400, 400), dropout=0.0, batch_norm=True, use_qr_emb=False, qr_collisions=4):
+def get_model(name, dataset, mlp_dims=(400, 400, 400), dropout=0.0, batch_norm=True, use_qr_emb=False, qr_collisions=4, return_raw_logits=False):
     field_dims = dataset.field_dims
     if type(mlp_dims) is int:
         mlp_dims = (mlp_dims, mlp_dims, mlp_dims)
     if name == 'fwfm' or mlp_dims == (0,0,0):
         return FieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_qr_emb=use_qr_emb)
     elif name == 'dfwfm':
-        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions, mlp_dims=mlp_dims, dropout=dropout, batch_norm=batch_norm)
+        return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions,
+                                                          mlp_dims=mlp_dims, dropout=dropout, batch_norm=batch_norm, return_raw_logits=return_raw_logits)
     elif name == 'mlp':
-        return MultiLayerPerceptronModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims, dropout=dropout, batch_norm=batch_norm)
+        return MultiLayerPerceptronModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims, dropout=dropout, batch_norm=batch_norm, return_raw_logits=return_raw_logits)
     elif name == 'fm':
         return FactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions)
     elif name == 'dfm':
@@ -142,19 +143,18 @@ def train_kd(student_model, teacher_model, optimizer, criterion, data_loader, de
             total_loss = 0
 
 
-def loss_fn_kd(student_outputs, teacher_outputs, y, alpha, temperature):
+def loss_fn_kd(student_logits, teacher_logits, y, alpha, temperature):
     """
     Compute the knowledge-distillation (KD) loss given outputs, labels.
     "Hyperparameters": temperature and alpha
 
-    NOTE: the KL Divergence for PyTorch comparing the softmaxs of teacher
-    and student expects the input tensor to be log probabilities! See Issue https://github.com/peterliht/knowledge-distillation-pytorch/issues/2
+    Using binary cross entropy instead of cross entropy and sigmoid instead of softmax, since it is a binary classification problem.
     """
 
-    soft_loss = torch.nn.KLDivLoss()(torch.log_softmax(student_outputs / temperature, dim=0),
-                                    torch.softmax(teacher_outputs / temperature, dim=0))
+    soft_loss = torch.nn.functional.binary_cross_entropy(torch.sigmoid(student_logits / temperature),
+                                    torch.sigmoid(teacher_logits / temperature).detach())
 
-    hard_loss = torch.nn.functional.binary_cross_entropy(student_outputs, y)
+    hard_loss = torch.nn.functional.binary_cross_entropy(torch.sigmoid(student_logits), y)
 
     return (alpha * (temperature ** 2) * soft_loss) + ((1. - alpha) * hard_loss)
 
