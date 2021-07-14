@@ -87,7 +87,8 @@ def get_model(name, dataset, mlp_dims=(400, 400, 400), dropout=0.0, batch_norm=T
         return DeepFieldWeightedFactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_fwlw=True, use_lw=False, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions,
                                                           mlp_dims=mlp_dims, dropout=dropout, batch_norm=batch_norm, return_raw_logits=return_raw_logits)
     elif name == 'mlp':
-        return MultiLayerPerceptronModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims, dropout=dropout, batch_norm=batch_norm, return_raw_logits=return_raw_logits)
+        return MultiLayerPerceptronModel(field_dims=field_dims, embed_dim=10, mlp_dims=mlp_dims, dropout=dropout, batch_norm=batch_norm, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions,
+                                         return_raw_logits=return_raw_logits)
     elif name == 'fm':
         return FactorizationMachineModel(field_dims=field_dims, embed_dim=10, use_qr_emb=use_qr_emb, qr_collisions=qr_collisions)
     elif name == 'dfm':

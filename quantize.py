@@ -18,7 +18,7 @@ def main(args, logger):
     mini_dataset = torch.utils.data.Subset(dataset, np.arange(1024 * 500))
     batch_sizes = [1, 64, 128, 256, 512]
 
-    model = get_model('dfwfm', dataset, use_qr_emb=args.use_qr_emb, qr_collisions=args.qr_collisions).to(device)
+    model = get_model(args.model_name, dataset, mlp_dims=args.mlp_dim, dropout=args.dropout, batch_norm=args.use_bn, use_qr_emb=args.use_qr_emb, qr_collisions=args.qr_collisions).to(device)
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
@@ -33,7 +33,7 @@ def main(args, logger):
     logger.info(model)
 
     # dynamic quantization
-    model_dynamic_quantized = torch.quantization.quantize_dynamic(model=model, qconfig_spec={'mlp'}, dtype=torch.qint8)
+    '''model_dynamic_quantized = torch.quantization.quantize_dynamic(model=model, qconfig_spec={'mlp'}, dtype=torch.qint8)
     loss, auc, prauc, rce = test(model_dynamic_quantized , test_data_loader, criterion, torch.device('cpu'))
     logger.info(f'dynamic quantization test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     print_size_of_model(model_dynamic_quantized)
@@ -41,10 +41,10 @@ def main(args, logger):
         batched_dataset = torch.utils.data.Subset(dataset, np.arange(batch_size * 500))
         batched_data_loader = torch.utils.data.DataLoader(batched_dataset, batch_size=batch_size, num_workers=0)
         logger.info(f"batch size:\t{batch_size}")
-        inference_time_cpu(model_dynamic_quantized, batched_data_loader, profile=args.profile_inference)
+        inference_time_cpu(model_dynamic_quantized, batched_data_loader, profile=args.profile_inference)'''
 
     # static quantization
-    model_static_quantized = static_quantization(model, valid_data_loader, criterion, dropout_layer=False)
+    model_static_quantized = static_quantization(model, valid_data_loader, criterion, dropout_layer=True if args.dropout > 0.0 else False)
     loss, auc, prauc, rce = test(model_static_quantized, test_data_loader, criterion, torch.device('cpu'))
     logger.info(f'static quantization test loss: {loss:.6f} auc: {auc:.6f} prauc: {prauc:.4f} rce: {rce:.4f}')
     print_size_of_model(model_static_quantized)

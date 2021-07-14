@@ -13,6 +13,7 @@ Reference: https://github.com/rixwew/pytorch-fm
 
 
 class MultiLayerPerceptronModel(torch.nn.Module):
+
     def __init__(self, field_dims, embed_dim, mlp_dims, dropout=0.0, use_qr_emb=False, qr_collisions=4, batch_norm=True, return_raw_logits=False):
         super().__init__()
         self.use_qr_emb = use_qr_emb

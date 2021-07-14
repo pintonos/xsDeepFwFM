@@ -18,8 +18,7 @@ def main(args, logger):
     dataset = get_dataset(args.dataset_name, args.dataset_path)
     train_data_loader, valid_data_loader, test_data_loader = get_dataloaders(dataset, args.dataset_name, args.batch_size)
 
-    teacher_model = get_model(teacher_model_name, dataset, use_qr_emb=args.use_qr_emb,
-                                    qr_collisions=args.qr_collisions, batch_norm=args.use_bn, dropout=args.dropout, return_raw_logits=True).to(device)
+    teacher_model = get_model(teacher_model_name, dataset, batch_norm=args.use_bn, dropout=args.dropout, return_raw_logits=True).to(device)
     checkpoint = torch.load(args.base_model_path)
     teacher_model.load_state_dict(checkpoint['model_state_dict'])
 
@@ -46,7 +45,9 @@ def main(args, logger):
     logger.info(student_model)
 
     # train model with KD
-    early_stopper = EarlyStopper(num_trials=5, save_path=f'{args.base_model_path[:-3]}_kd_{args.mlp_dim}_alpha_{args.alpha}_raw.pt', accuracy=best_accuracy)
+    save_path = f'{args.base_model_path[:-3]}_kd_{args.mlp_dim}_alpha_{args.alpha}_qr_2.pt'
+    logger.info(save_path)
+    early_stopper = EarlyStopper(num_trials=5, save_path=save_path, accuracy=best_accuracy)
     for epoch_i in range(epoch + 1, epoch + args.epochs + 1):
         train_kd(student_model, teacher_model, optimizer, criterion, train_data_loader, device, alpha=args.alpha, temperature=args.temperature)
         student_model.return_raw_logits = False
@@ -62,7 +63,7 @@ def main(args, logger):
         student_model.return_raw_logits = True
 
     # load best model
-    checkpoint = torch.load(f'{args.base_model_path[:-3]}_kd_{args.mlp_dim}_alpha_{args.alpha}.pt')
+    checkpoint = torch.load(save_path)
     student_model.load_state_dict(checkpoint['model_state_dict'])
     student_model.return_raw_logits = False
     loss, auc, prauc, rce = test(student_model, test_data_loader, criterion, device)
