@@ -89,17 +89,18 @@ def plot_latency_vs_auc_qr():
 
 
 def plot_latency_vs_auc():
-    latency = [41.17, 331.48, 217.24, 178.26, 54.62, 48.10, 61.67]  # 512
-    auc = [0.8050, 0.8077, 0.8062, 0.8039, 0.8076, 0.8076, 0.8073]
+    latency = [0.178, 2.018, 36.250, 142.776, 10080.782, 549.400, 9.414]  # 512
+    auc = [0.7899, 0.7971, 0.8058, 0.8056, 0.8078, 0.8086, 0.8080]
 
     fig, ax1 = plt.subplots(figsize=(10, 5))
 
     color = 'black'
     ax1.set_xlabel('Model')
     ax1.set_ylabel('Latency (ms)', color=color)
+    ax1.set_yscale('log')
     ax1.tick_params(axis='y', labelcolor=color)
-    plt.bar(np.arange(len(latency)), height=latency, color=['orange', 'green', 'navy', 'royalblue', 'indigo', 'darkviolet', 'mediumorchid'])
-    plt.xticks(np.arange(len(latency)), ['FwFM', 'DeepFwFM', 'QR (4)', 'QR (16)', 'Dynamic', 'Static', 'QAT'])
+    plt.bar(np.arange(len(latency)), height=latency, color=['lightblue', 'royalblue', 'navy', 'mediumorchid', 'indigo', 'darkviolet', 'green'])
+    plt.xticks(np.arange(len(latency)), ['LR', 'FM', 'FwFM', 'DeepFM', 'xDeepFM', 'DeepFwFM', 'xsDeepFwFM'])
 
     ax1.set_axisbelow(True)
     ax1.yaxis.grid(color='gray', linestyle='dashed')
@@ -110,11 +111,11 @@ def plot_latency_vs_auc():
     color = 'tab:red'
     ax2.set_ylabel('AUC', color=color)  # we already handled the x-label with ax1
     ax2.plot(auc, color=color, marker='D')
-    ax2.set_yticks(np.arange(min(auc), max(auc)+0.001, 0.001))
+    #ax2.set_yticks(np.arange(0.7890, 0.8090, 0.005))
     ax2.tick_params(axis='y', labelcolor=color)
 
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    fig.savefig('figures/latency.png', dpi=300)
+    fig.savefig('../figures/latency.png', dpi=500)
     plt.show()
 
 
@@ -142,14 +143,14 @@ def plot_latency_vs_batch_size():
     ax1.set_ylabel('Latency (ms)', color=color)
     ax1.tick_params(axis='y', labelcolor=color)
     for i, l1 in enumerate(latency1):
-        ax1.bar(i - 0.2, l1, width=0.2, color='b', align='center')
-        ax1.bar(i, latency2[i], width=0.2, color='r', align='center')
-        ax1.bar(i + 0.2, latency3[i], width=0.2, color='g', align='center')
+        ax1.bar(i - 0.2, l1, width=0.2, color='r', align='center')
+        ax1.bar(i, latency2[i], width=0.2, color='g', align='center')
+        ax1.bar(i + 0.2, latency3[i], width=0.2, color='b', align='center')
         #ax1.bar(i + 0.4, latency4[i], width=0.2, color='r', align='center')
     #plt.bar(np.arange(len(latency1)), height=latency1, color=plt.cm.get_cmap('winter')(rescale(batch_sizes)))
     plt.xticks(np.arange(len(batch_sizes)), map(str, batch_sizes))
 
-    colors = {'Dynamic': 'b', 'Static': 'r', 'QAT': 'g'}
+    colors = {'Dynamic': 'r', 'Static': 'g', 'QAT': 'b'}
     labels = list(colors.keys())
     handles = [plt.Rectangle((0, 0), 1, 1, color=colors[label]) for label in labels]
     plt.legend(handles, labels)
@@ -162,13 +163,13 @@ def plot_latency_vs_batch_size():
 
     color = 'black'
     ax2.set_ylabel('Throughput (items/ms)', color=color)  # we already handled the x-label with ax1
-    ax2.plot([i - 0.2 for i in range(len(latency1))], throughput1, color='cornflowerblue', marker='D')
-    ax2.plot([i for i in range(len(latency2))], throughput2, color='darkred', marker='D')
-    ax2.plot([i + 0.2 for i in range(len(latency3))], throughput3, color='darkgreen', marker='D')
+    ax2.plot([i - 0.2 for i in range(len(latency1))], throughput1, color='darkred', marker='D')
+    ax2.plot([i for i in range(len(latency2))], throughput2, color='darkgreen', marker='D')
+    ax2.plot([i + 0.2 for i in range(len(latency3))], throughput3, color='cornflowerblue', marker='D')
     ax2.tick_params(axis='y', labelcolor=color)
 
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    fig.savefig('../figures/batch_latency.png', dpi=300)
+    fig.savefig('../figures/batch_latency_quant.png', dpi=500)
     plt.show()
 
 
@@ -176,15 +177,17 @@ def plot_latency_vs_batch_size_qr(cpu=True):
     if cpu:
         batch_sizes = [64, 128, 256, 512]
 
+        latency0 = [76.736, 151.032, 301.912, 609.880]
         latency1 = [67.244, 129.276, 253.910, 504.24]
         latency2 = [39.628, 75.712, 147.116, 288.920]
     else:
         batch_sizes = [512, 1024, 2048, 4096]
 
+        latency0 = [6.772, 9.772, 14.440, 24.746]
         latency1 = [9.995, 10.356, 14.040, 20.046]
         latency2 = [9.275, 10.506, 14.431, 21.580]
 
-
+    throughput0 = [b / l for (b, l) in zip(batch_sizes, latency1)]
     throughput1 = [b / l for (b, l) in zip(batch_sizes, latency1)]
     throughput2 = [b / l for (b, l) in zip(batch_sizes, latency2)]
 
@@ -198,11 +201,12 @@ def plot_latency_vs_batch_size_qr(cpu=True):
     ax1.set_ylabel('Latency (ms)', color=color)
     ax1.tick_params(axis='y', labelcolor=color)
     for i, l1 in enumerate(latency1):
-        ax1.bar(i - 0.2, l1, width=0.4, color='b', align='center')
-        ax1.bar(i + 0.2, latency2[i], width=0.4, color='g', align='center')
+        ax1.bar(i - 0.2, latency0[i], width=0.2, color='r', align='center')
+        ax1.bar(i , l1, width=0.2, color='g', align='center')
+        ax1.bar(i + 0.2, latency2[i], width=0.2, color='b', align='center')
     plt.xticks(np.arange(len(batch_sizes)), map(str, batch_sizes))
 
-    colors = {'QR 4': 'b', 'QR 60': 'g'}
+    colors = {'QR 2': 'r', 'QR 4': 'g', 'QR 60': 'b'}
     labels = list(colors.keys())
     handles = [plt.Rectangle((0, 0), 1, 1, color=colors[label]) for label in labels]
     plt.legend(handles, labels)
@@ -215,15 +219,16 @@ def plot_latency_vs_batch_size_qr(cpu=True):
 
     color = 'black'
     ax2.set_ylabel('Throughput (items/ms)', color=color)  # we already handled the x-label with ax1
-    ax2.plot([i - 0.2 for i in range(len(latency1))], throughput1, color='cornflowerblue', marker='D')
-    ax2.plot([i + 0.2 for i in range(len(latency2))], throughput2, color='darkgreen', marker='D')
+    ax2.plot([i - 0.2 for i in range(len(latency0))], throughput0, color='darkred', marker='D')
+    ax2.plot([i for i in range(len(latency1))], throughput1, color='darkgreen', marker='D')
+    ax2.plot([i + 0.2 for i in range(len(latency2))], throughput2, color='cornflowerblue', marker='D')
     ax2.tick_params(axis='y', labelcolor=color)
 
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
     if cpu:
-        fig.savefig('../figures/batch_latency_qr_cpu.png', dpi=300)
+        fig.savefig('../figures/batch_latency_qr_cpu.png', dpi=500)
     else:
-        fig.savefig('../figures/batch_latency_qr_gpu.png', dpi=300)
+        fig.savefig('../figures/batch_latency_qr_gpu.png', dpi=500)
     plt.show()
 
 
@@ -262,10 +267,10 @@ def plot_profile():
     plt.show()
 
 
-plot_kd_val_loss()
+#plot_kd_val_loss()
 #plot_latency_vs_auc_quantization()
 #plot_latency_vs_auc_qr()
-#plot_latency_vs_auc()
+plot_latency_vs_auc()
 #plot_profile()
 #plot_latency_vs_batch_size()
 #plot_latency_vs_batch_size_qr(cpu=False)
