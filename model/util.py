@@ -292,19 +292,19 @@ def static_quantization(model, dataloader, criterion, dropout_layer=False):
     model_fused = torch.quantization.fuse_modules(model,
                                                           [['mlp.mlp.' + str(layer_start),
                                                             'mlp.mlp.' + str(layer_start + 1)],
-                                                           ['mlp.mlp.' + str(layer_offset),
-                                                            'mlp.mlp.' + str((layer_offset + 1))],
-                                                           ['mlp.mlp.' + str(layer_offset * 2),
-                                                            'mlp.mlp.' + str((layer_offset * 2 + 1))]])
+                                                           ['mlp.mlp.' + str(layer_start + layer_offset),
+                                                            'mlp.mlp.' + str(layer_start + layer_offset + 1)],
+                                                           ['mlp.mlp.' + str(layer_start + (layer_offset * 2)),
+                                                            'mlp.mlp.' + str(layer_start + (layer_offset * 2 + 1))]])
 
     #  fuse linear and relu
     model_fused = torch.quantization.fuse_modules(model_fused,
                                                           [['mlp.mlp.' + str(layer_start),
                                                             'mlp.mlp.' + str(layer_start + 2)],
-                                                           ['mlp.mlp.' + str(layer_offset),
-                                                            'mlp.mlp.' + str((layer_offset + 2))],
-                                                           ['mlp.mlp.' + str(layer_offset * 2),
-                                                            'mlp.mlp.' + str((layer_offset * 2 + 2))]])
+                                                           ['mlp.mlp.' + str(layer_start + layer_offset),
+                                                            'mlp.mlp.' + str(layer_start + (layer_offset + 2))],
+                                                           ['mlp.mlp.' + str(layer_start + layer_offset * 2),
+                                                            'mlp.mlp.' + str(layer_start + (layer_offset * 2 + 2))]])
     model_prepared = torch.quantization.prepare(model_fused)
     _, _, _, _ = test(model_prepared, dataloader, criterion, device)  # calibrate
 

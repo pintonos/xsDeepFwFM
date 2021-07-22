@@ -12,7 +12,7 @@ def main(args):
     _, _, test_dataset = get_datasets(dataset, args.dataset_name)
     test_data_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, num_workers=0)
 
-    model = get_model(args.model_name, dataset, mlp_dims=args.mlp_dim, use_qr_emb=args.use_qr_emb, qr_collisions=args.qr_collisions).to(device)
+    model = get_model(args.model_name, dataset, mlp_dims=args.mlp_dim, use_qr_emb=args.use_qr_emb, qr_collisions=args.qr_collisions, dropout=args.dropout).to(device)
     print(model)
     checkpoint = torch.load(args.model_path)
     model.load_state_dict(checkpoint['model_state_dict'])

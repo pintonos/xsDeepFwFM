@@ -22,7 +22,6 @@ Evaluation on the Criteo dataset and the Twitter dataset given by the RecSys 202
 
 This repository is part of my master thesis.
 
-
 ## Results
 
 ### Criteo Dataset
@@ -36,7 +35,7 @@ This repository is part of my master thesis.
 | LR      | 0.4614    | 0.7899 |  1,086,811    | 
 | FM      | 0.4555    | 0.7971 | 11,954,911    | 
 | DeepFM  | 0.4475    | 0.8056 | 12,434,912    |
-| xDeepFM | 0.4454    | 0.8078 | 12,434,912    |
+| xDeepFM | 0.4454    | 0.8078 | 15,508,958    | 
 
 | Model   | 1 (CPU) | 64        | 128       | 256     | 512      | 512 (GPU) | 1024    | 2048    | 4096    | Notes |
 |---------|---------|-----------|-----------|---------|----------|-----------|---------|---------|---------|-------|
@@ -61,8 +60,7 @@ This repository is part of my master thesis.
 | -         | -             | (100,100,100) | 0.4450    | 0.8082 | 0.6152    | 22.11 | 10,928,101    |  43.736   | KD, a=0.1, t=3
 | -         | -             | (100,100,100) | 0.4453    | 0.8078 | 0.6146    | 22.06 | 10,928,101    |  43.736   | no KD TODO
 
-
-#### Embeddings - Latency
+#### Embeddings - Latency (ms)
 
 | Embedding       |  # Deep Nodes | 1 (CPU) | 64     | 128    | 256     | 512     | 512 (GPU) | 1024    | 2048    | 4096    | Notes |
 |-----------------|---------------|---------|--------|--------|---------|---------|-----------|---------|---------|---------|-------|
@@ -72,7 +70,7 @@ This repository is part of my master thesis.
 | QR EmbeddingBag | (400,400,400) | 4.142   | 67.244 |129.276 | 253.910 | 504.246 | 9.995     | 10.356  | 14.040  | 20.046  | 4 collisions
 | QR EmbeddingBag | (400,400,400) | 4.284   | 39.628 | 75.712 | 147.116 | 288.920 | 9.275     | 10.506  | 14.431  | 21.580  | 60 collisions
 
-#### Quantization - Latency
+#### Quantization - Latency (ms)
 
 | Quantization  | 1 (CPU) | 64     | 128    | 256      | 512     |
 |---------------|---------|--------|--------|----------|---------|
@@ -81,7 +79,7 @@ This repository is part of my master thesis.
 | Static        | 5.062   | 10.139 | 16.034 | 27.146   | 49.352  |
 | QAT           | 5.457   | 11.141 | 16.404 | 26.892   | 46.676  |
 
-#### Knowledge Distillation - Latency
+#### Knowledge Distillation - Latency (ms)
 
 | Embedding       |  # Deep Nodes | 1 (CPU) | 64     | 128    | 256     | 512     | 512 (GPU) | 1024    | 2048    | 4096    |
 |-----------------|---------------|---------|--------|--------|---------|---------|-----------|---------|---------|---------|
@@ -89,7 +87,6 @@ This repository is part of my master thesis.
 | EmbeddingBag    | (200,200,200) | 0.618   | 10.626 | 18.752 |  37.428 |  73.060 | 2.489     | 2.803   | 3.175   |  3.886  | 
 | EmbeddingBag    | (100,100,100) | 0.536   |  2.812 |  4.818 |   8.454 |  16.022 | 2.520     | 2.817   | 3.094   |  3.325  | 
 
- 
 #### Ensembles
 
 | Embedding     | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) |  Notes |
@@ -99,9 +96,9 @@ This repository is part of my master thesis.
 | QR Embedding  | None          | (100,100,100) | 0.4459    | 0.8072 | 0.6138    | 21.96 |  2,785,631    |  11.172   | KD + 4 coll
 | Embedding     | Static        | (200,200,200) | 0.4448    | 0.8082 | 0.6159    | 22.15 | 11,028,101    |  19.781   | KD
 | Embedding     | Static        | (100,100,100) | 0.4452    | 0.8078 | 0.6151    | 22.07 | 10,928,101    |  19.671   | KD
+| QR Embedding  | Static        | (200,200,200) | 0.4451    | 0.8078 | 0.6153    | 22.09 |  5,599,651    |  21.947   | KD + 2 coll
 
-
-#### Ensembles - Latency
+#### Ensembles - Latency (ms)
 
 | Embedding    | Quantization  | # Deep Nodes  | 1 (CPU) | 64     | 128    | 256      | 512     | Notes |
 |--------------|---------------|---------------|---------|--------|--------|----------|---------|-------|
@@ -109,22 +106,34 @@ This repository is part of my master thesis.
 | QR Embedding | None          | (100,100,100) | 1.260   |  3.058 |  4.778 |  8.518   | 16.136  | KD + 4 coll
 | Embedding    | Static        | (200,200,200) | 6.132   |  6.826 |  6.772 |  7.134   |  9.414  | KD
 | Embedding    | Static        | (100,100,100) | 5.432   |  5.726 |  6.120 |  6.290   |  7.240  | KD
+| QR Embedding | Static        | (200,200,200) | 3.898   | 4.414  | 4.888  |  5.544   |  7.062  | KD + 2 coll
 
 ### Twitter
 - Threshold: 15
 - Epochs: 50 with early stopping
 - Dropout: 0.2
 
-| Embedding       | Quantization  | # Deep Nodes  | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) | Notes      |
-|-----------------|---------------|---------------|-----------|--------|-----------|-------|---------------|-----------|------------|
-| EmbeddingBag    | None          | (0,0,0)       | 0.3248    | 0.9368 |  0.9049   | 52.19 | 131,425,764   |  525.721  | Like
-| EmbeddingBag    | None          | (0,0,0)       | 0.2202    | 0.8754 |  0.5223   | 31.35 | 131,425,764   |  525.721  | Retweet
-| EmbeddingBag    | None          | (0,0,0)       | 0.0988    | 0.8463 |  0.1388   | 16.90 | 131,425,764   |  525.721  | Reply
-| EmbeddingBag    | None          | (0,0,0)       | 0.0360    | 0.8231 |  0.0456   | 11.43 | 131,425,764   |  525.721  | Retweet with comment
-| EmbeddingBag    | None          | (400,400,400) | 0.3180    | 0.9398 |  0.9100   | 53.19 | 131,937,765   |  527.786  | Like
-| EmbeddingBag    | None          | (400,400,400) | 0.2161    | 0.8807 |  0.5355   | 32.63 | 131,937,765   |  527.786  | Retweet
-| EmbeddingBag    | None          | (400,400,400) | 0.0961    | 0.8549 |  0.1525   | 19.17 | 131,937,765   |  527.786  | Reply
-| EmbeddingBag    | None          | (400,400,400) | 0.0356    | 0.8122 |  0.0358   | 11.75 | 131,937,765   |  527.786  | Retweet with comment 
+| Model     | LogLoss   | AUC    | PRAUC     | RCE   | # Parameters  | Size (MB) | Notes      |
+|-----------|-----------|--------|-----------|-------|---------------|-----------|------------|
+| FwFM      | 0.3248    | 0.9368 |  0.9049   | 52.19 | 131,425,764   |  525.721  | Like
+| FwFM      | 0.2202    | 0.8754 |  0.5223   | 31.35 | 131,425,764   |  525.721  | Retweet
+| FwFM      | 0.0988    | 0.8463 |  0.1388   | 16.90 | 131,425,764   |  525.721  | Reply
+| FwFM      | 0.0360    | 0.8231 |  0.0456   | 11.43 | 131,425,764   |  525.721  | Retweet with comment
+| DeepFwFM  | 0.3147    | 0.9385 |  0.9077   | 53.67 | 131,937,765   |  527.786  | Like
+| DeepFwFM  | 0.2210    | 0.8731 |  0.5121   | 31.08 | 131,937,765   |  527.786  | Retweet
+| DeepFwFM  | 0.0965    | 0.8466 |  0.1372   | 18.82 | 131,937,765   |  527.786  | Reply
+| DeepFwFM  | 0.0355    | 0.8183 |  0.0416   | 12.56 | 131,937,765   |  527.786  | Retweet with comment 
+| xsDeepFwFM| 0.3732    | 0.9243 |  0.8859   | 45.06 |  59,917,741   |  239.705  | Like
+| xsDeepFwFM| 0.2200    | 0.8739 |  0.5155   | 31.42 |  59,917,741   |  239.705  | Retweet
+| xsDeepFwFM| 0.0961    | 0.8479 |  0.1424   | 19.11 |  59,917,741   |  239.705  | Reply
+| xsDeepFwFM| 0.0358    | 0.8124 |  0.0388   | 11.92 |  59,917,741   |  239.705  | Retweet with comment 
+
+
+| Model     | 1 (CPU) | 64     | 128    | 256      | 512      |
+|-----------|---------|--------|--------|----------|----------|
+| FwFM      | 0.780   | 19.816 | 39.906 |  80.346  | 160.170  | 
+| DeepFwFM  | 2.024   | 74.256 |147.038 | 290.154  | 578.644  |
+| xsDeepFwFM| 5.544   |  6.160 |  6.764 |   7.648  |  10.464  |
 
 
 ## References

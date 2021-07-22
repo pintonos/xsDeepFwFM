@@ -111,10 +111,7 @@ class FieldWeightedFactorizationMachineModel(torch.nn.Module):
         """
         embed_x = torch.transpose(self.embeddings(x), 0, 1)
 
-        start = timer()
         fwfm_second_order = torch.sum(self.fwfm(embed_x), dim=1, keepdim=True)
-        end = timer()
-        print(end - start)
 
         if self.use_lw and not self.use_fwlw:
             x = self.linear(x) + fwfm_second_order + self.bias

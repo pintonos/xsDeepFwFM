@@ -15,7 +15,7 @@ def main(args, logger):
     teacher_model_name = 'dfwfm'
     student_model_name = 'mlp'
     device = torch.device(args.device)
-    dataset = get_dataset(args.dataset_name, args.dataset_path)
+    dataset = get_dataset(args.dataset_name, args.dataset_path, twitter_label=args.twitter_label)
     train_data_loader, valid_data_loader, test_data_loader = get_dataloaders(dataset, args.dataset_name, args.batch_size)
 
     teacher_model = get_model(teacher_model_name, dataset, batch_norm=args.use_bn, dropout=args.dropout, return_raw_logits=True).to(device)
