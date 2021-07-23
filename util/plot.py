@@ -89,7 +89,7 @@ def plot_latency_vs_auc_qr():
 
 
 def plot_latency_vs_auc():
-    latency = [0.178, 2.018, 36.250, 142.776, 10080.782, 549.400, 9.414]  # 512
+    latency = [0.178, 2.018, 36.250, 142.776, 10080.782, 549.400, 7.062]  # 512
     auc = [0.7899, 0.7971, 0.8058, 0.8056, 0.8078, 0.8086, 0.8080]
 
     fig, ax1 = plt.subplots(figsize=(10, 5))
@@ -131,9 +131,9 @@ def plot_latency_vs_batch_size():
     latency3 = [11.141, 16.404, 26.892, 46.676]
     # latency1 = [72.418, 143.632, 279.482, 549.400]
 
-    throughput1 = [b / l for (b, l) in zip(batch_sizes, latency1)]
-    throughput2 = [b / l for (b, l) in zip(batch_sizes, latency2)]
-    throughput3 = [b / l for (b, l) in zip(batch_sizes, latency3)]
+    throughput1 = np.array([b / l for (b, l) in zip(batch_sizes, latency1)]) * 1000
+    throughput2 = np.array([b / l for (b, l) in zip(batch_sizes, latency2)]) * 1000
+    throughput3 = np.array([b / l for (b, l) in zip(batch_sizes, latency3)]) * 1000
     #throughput4 = [b / l for (b, l) in zip(batch_sizes, latency4)]
 
     fig, ax1 = plt.subplots()
@@ -162,7 +162,7 @@ def plot_latency_vs_batch_size():
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
     color = 'black'
-    ax2.set_ylabel('Throughput (items/ms)', color=color)  # we already handled the x-label with ax1
+    ax2.set_ylabel('Throughput (items/s)', color=color)  # we already handled the x-label with ax1
     ax2.plot([i - 0.2 for i in range(len(latency1))], throughput1, color='darkred', marker='D')
     ax2.plot([i for i in range(len(latency2))], throughput2, color='darkgreen', marker='D')
     ax2.plot([i + 0.2 for i in range(len(latency3))], throughput3, color='cornflowerblue', marker='D')
@@ -187,9 +187,9 @@ def plot_latency_vs_batch_size_qr(cpu=True):
         latency1 = [9.995, 10.356, 14.040, 20.046]
         latency2 = [9.275, 10.506, 14.431, 21.580]
 
-    throughput0 = [b / l for (b, l) in zip(batch_sizes, latency1)]
-    throughput1 = [b / l for (b, l) in zip(batch_sizes, latency1)]
-    throughput2 = [b / l for (b, l) in zip(batch_sizes, latency2)]
+    throughput0 = np.array([b / l for (b, l) in zip(batch_sizes, latency1)]) * 1000
+    throughput1 = np.array([b / l for (b, l) in zip(batch_sizes, latency1)]) * 1000
+    throughput2 = np.array([b / l for (b, l) in zip(batch_sizes, latency2)]) * 1000
 
     fig, ax1 = plt.subplots()
 
@@ -218,7 +218,7 @@ def plot_latency_vs_batch_size_qr(cpu=True):
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
     color = 'black'
-    ax2.set_ylabel('Throughput (items/ms)', color=color)  # we already handled the x-label with ax1
+    ax2.set_ylabel('Throughput (items/s)', color=color)  # we already handled the x-label with ax1
     ax2.plot([i - 0.2 for i in range(len(latency0))], throughput0, color='darkred', marker='D')
     ax2.plot([i for i in range(len(latency1))], throughput1, color='darkgreen', marker='D')
     ax2.plot([i + 0.2 for i in range(len(latency2))], throughput2, color='cornflowerblue', marker='D')
@@ -270,7 +270,7 @@ def plot_profile():
 #plot_kd_val_loss()
 #plot_latency_vs_auc_quantization()
 #plot_latency_vs_auc_qr()
-plot_latency_vs_auc()
+#plot_latency_vs_auc()
 #plot_profile()
 #plot_latency_vs_batch_size()
-#plot_latency_vs_batch_size_qr(cpu=False)
+plot_latency_vs_batch_size_qr(cpu=False)
