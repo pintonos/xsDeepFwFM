@@ -123,7 +123,7 @@ This repository is part of my master thesis.
 | DeepFwFM  | 0.2210    | 0.8731 |  0.5121   | 31.08 | 131,937,765   |  527.786  | Retweet
 | DeepFwFM  | 0.0965    | 0.8466 |  0.1372   | 18.82 | 131,937,765   |  527.786  | Reply
 | DeepFwFM  | 0.0355    | 0.8183 |  0.0416   | 12.56 | 131,937,765   |  527.786  | Retweet with comment 
-| xsDeepFwFM| 0.3732    | 0.9243 |  0.8859   | 45.06 |  59,917,741   |  239.705  | Like
+| xsDeepFwFM| 0.3226    | 0.9372 |  0.9046   | 52.51 |  59,917,741   |  239.705  | Like
 | xsDeepFwFM| 0.2200    | 0.8739 |  0.5155   | 31.42 |  59,917,741   |  239.705  | Retweet
 | xsDeepFwFM| 0.0961    | 0.8479 |  0.1424   | 19.11 |  59,917,741   |  239.705  | Reply
 | xsDeepFwFM| 0.0358    | 0.8124 |  0.0388   | 11.92 |  59,917,741   |  239.705  | Retweet with comment 
