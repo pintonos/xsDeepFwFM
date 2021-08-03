@@ -96,7 +96,7 @@ This repository is part of my master thesis.
 | QR Embedding  | None          | (100,100,100) | 0.4459    | 0.8072 | 0.6138    | 21.96 |  2,785,631    |  11.172   | KD + 4 coll
 | Embedding     | Static        | (200,200,200) | 0.4448    | 0.8082 | 0.6159    | 22.15 | 11,028,101    |  19.781   | KD
 | Embedding     | Static        | (100,100,100) | 0.4452    | 0.8078 | 0.6151    | 22.07 | 10,928,101    |  19.671   | KD
-| QR Embedding  | Static        | (200,200,200) | 0.4451    | 0.8078 | 0.6153    | 22.09 |  5,599,651    |  21.947   | KD + 2 coll
+| QR Embedding  | Static        | (200,200,200) | 0.4451    | 0.8080 | 0.6153    | 22.09 |  5,599,651    |  21.947   | KD + 2 coll
 
 #### Ensembles - Latency (ms)
 
