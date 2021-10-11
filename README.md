@@ -1,7 +1,7 @@
 # Extreme Small Deep Field-Weighted Factorization Machine - xsDeepFwFM
 Acceleration and Compression of DeepFwFM.
 
-Original paper (DeepFwFM):
+DeepFwFM:
 ```
 @inproceedings{deeplight,
   title={DeepLight: Deep Lightweight Feature Interactions for Accelerating CTR Predictions in Ad Serving},
@@ -19,8 +19,6 @@ Used techniques:
 - Knowledge Distillation
 
 Evaluation on the Criteo dataset and the Twitter dataset given by the RecSys 2020 Challenge.
-
-This repository is part of my master thesis.
 
 ## Results
 
@@ -96,7 +94,7 @@ This repository is part of my master thesis.
 | QR Embedding  | None          | (100,100,100) | 0.4459    | 0.8072 | 0.6138    | 21.96 |  2,785,631    |  11.172   | KD + 4 coll
 | Embedding     | Static        | (200,200,200) | 0.4448    | 0.8082 | 0.6159    | 22.15 | 11,028,101    |  19.781   | KD
 | Embedding     | Static        | (100,100,100) | 0.4452    | 0.8078 | 0.6151    | 22.07 | 10,928,101    |  19.671   | KD
-| QR Embedding  | Static        | (200,200,200) | 0.4451    | 0.8078 | 0.6153    | 22.09 |  5,599,651    |  21.947   | KD + 2 coll
+| QR Embedding  | Static        | (200,200,200) | 0.4451    | 0.8080 | 0.6153    | 22.09 |  5,599,651    |  21.947   | KD + 2 coll
 
 #### Ensembles - Latency (ms)
 
@@ -123,7 +121,7 @@ This repository is part of my master thesis.
 | DeepFwFM  | 0.2210    | 0.8731 |  0.5121   | 31.08 | 131,937,765   |  527.786  | Retweet
 | DeepFwFM  | 0.0965    | 0.8466 |  0.1372   | 18.82 | 131,937,765   |  527.786  | Reply
 | DeepFwFM  | 0.0355    | 0.8183 |  0.0416   | 12.56 | 131,937,765   |  527.786  | Retweet with comment 
-| xsDeepFwFM| 0.3732    | 0.9243 |  0.8859   | 45.06 |  59,917,741   |  239.705  | Like
+| xsDeepFwFM| 0.3226    | 0.9372 |  0.9046   | 52.51 |  59,917,741   |  239.705  | Like
 | xsDeepFwFM| 0.2200    | 0.8739 |  0.5155   | 31.42 |  59,917,741   |  239.705  | Retweet
 | xsDeepFwFM| 0.0961    | 0.8479 |  0.1424   | 19.11 |  59,917,741   |  239.705  | Reply
 | xsDeepFwFM| 0.0358    | 0.8124 |  0.0388   | 11.92 |  59,917,741   |  239.705  | Retweet with comment 
