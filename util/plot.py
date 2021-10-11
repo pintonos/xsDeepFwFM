@@ -99,7 +99,7 @@ def plot_latency_vs_auc():
     ax1.set_ylabel('Latency (ms)', color=color)
     ax1.set_yscale('log')
     ax1.tick_params(axis='y', labelcolor=color)
-    plt.bar(np.arange(len(latency)), height=latency, color=['lightblue', 'royalblue', 'navy', 'mediumorchid', 'indigo', 'darkviolet', 'green'])
+    plt.bar(np.arange(len(latency)), height=latency, color=['lightgreen', 'limegreen', 'darkgreen', 'lightblue', 'navy', 'royalblue', 'magenta'])
     plt.xticks(np.arange(len(latency)), ['LR', 'FM', 'FwFM', 'DeepFM', 'xDeepFM', 'DeepFwFM', 'xsDeepFwFM'])
 
     ax1.set_axisbelow(True)
@@ -270,7 +270,7 @@ def plot_profile():
 #plot_kd_val_loss()
 #plot_latency_vs_auc_quantization()
 #plot_latency_vs_auc_qr()
-#plot_latency_vs_auc()
+plot_latency_vs_auc()
 #plot_profile()
 #plot_latency_vs_batch_size()
-plot_latency_vs_batch_size_qr(cpu=False)
+#plot_latency_vs_batch_size_qr(cpu=False)
