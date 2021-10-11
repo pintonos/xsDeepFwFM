@@ -1,7 +1,7 @@
 # Extreme Small Deep Field-Weighted Factorization Machine - xsDeepFwFM
 Acceleration and Compression of DeepFwFM.
 
-Original paper (DeepFwFM):
+DeepFwFM:
 ```
 @inproceedings{deeplight,
   title={DeepLight: Deep Lightweight Feature Interactions for Accelerating CTR Predictions in Ad Serving},
@@ -19,8 +19,6 @@ Used techniques:
 - Knowledge Distillation
 
 Evaluation on the Criteo dataset and the Twitter dataset given by the RecSys 2020 Challenge.
-
-This repository is part of my master thesis.
 
 ## Results
 
