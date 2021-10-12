@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 
 
@@ -84,18 +85,23 @@ def plot_latency_vs_auc_qr():
     ax2.tick_params(axis='y', labelcolor=color)
 
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    fig.savefig('figures/qr_latency.png', dpi=300)
+    fig.savefig('../figures/qr_latency.png', dpi=300)
     plt.show()
 
 
 def plot_latency_vs_auc():
+    font = {'weight': 'bold',
+            'size': 13}
+
+    matplotlib.rc('font', **font)
+
     latency = [0.178, 2.018, 36.250, 142.776, 10080.782, 549.400, 7.062]  # 512
     auc = [0.7899, 0.7971, 0.8058, 0.8056, 0.8078, 0.8086, 0.8080]
 
-    fig, ax1 = plt.subplots(figsize=(10, 5))
+    fig, ax1 = plt.subplots(figsize=(12, 5))
 
     color = 'black'
-    ax1.set_xlabel('Model')
+    #ax1.set_xlabel('Model')
     ax1.set_ylabel('Latency (ms)', color=color)
     ax1.set_yscale('log')
     ax1.tick_params(axis='y', labelcolor=color)
